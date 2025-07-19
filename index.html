@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite WebAssembly Playground</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .sql-input {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .sql-input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .results {
+            margin-top: 20px;
+        }
+        
+        .error {
+            color: #e74c3c;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .success {
+            color: #27ae60;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .schema-table {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .examples {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .example-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .example-btn:hover {
+            background: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQLite WebAssembly Playground</h1>
+            <p>Полнофункциональная база данных SQLite прямо в вашем браузере</p>
+        </div>
+        
+        <div class="content">
+            <div class="loading" id="loading">
+                Загрузка SQLite WebAssembly...
+            </div>
+            
+            <div id="main-content" style="display: none;">
+                <!-- Схема базы данных -->
+                <div class="section">
+                    <h3>Схема базы данных</h3>
+                    <div id="schema-container">
+                        <div class="schema-table" id="schema-content">
+                            <!-- Схема будет загружена здесь -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SQL редактор -->
+                <div class="section">
+                    <h3>SQL редактор</h3>
+                    <div class="examples">
+                        <button class="example-btn" onclick="setExample('SELECT * FROM users;')">Показать пользователей</button>
+                        <button class="example-btn" onclick="setExample('INSERT INTO users (name, email) VALUES (\'Иван Иванов\', \'ivan@example.com\');')">Добавить пользователя</button>
+                        <button class="example-btn" onclick="setExample('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL);')">Создать таблицу товаров</button>
+                        <button class="example-btn" onclick="setExample('SELECT name, COUNT(*) as count FROM sqlite_master WHERE type=\'table\' GROUP BY name;')">Список таблиц</button>
+                    </div>
+                    <textarea 
+                        class="sql-input" 
+                        id="sql-input" 
+                        placeholder="Введите ваш SQL запрос здесь...">SELECT * FROM users;</textarea>
+                    <button class="btn" id="execute-btn" onclick="executeSQL()">Выполнить запрос</button>
+                </div>
+                
+                <!-- Результаты -->
+                <div class="section">
+                    <h3>Результаты</h3>
+                    <div id="results-container">
+                        <p>Результаты выполнения появятся здесь...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://sql.js.org/dist/sql-wasm.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

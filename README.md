@@ -1,1 +1,148 @@
-# SQLite-trainer
+# SQLite WebAssembly Playground
+
+Интерактивная веб-страница для работы с SQLite прямо в браузере с помощью WebAssembly.
+
+## Описание
+
+Этот проект представляет собой простую веб-страницу, которая позволяет:
+
+1. **Выполнять SQL запросы** в браузере с помощью SQLite WebAssembly
+2. **Просматривать схему базы данных** - все существующие таблицы и их структуру
+3. **Работать с данными** - добавлять, изменять, удалять записи
+4. **Использовать готовые примеры** запросов для быстрого начала работы
+
+## Особенности
+
+- ✅ **Полная поддержка SQL** - все возможности SQLite
+- ✅ **Работает локально** - база данных создается в памяти браузера
+- ✅ **Простой интерфейс** - понятный и удобный дизайн
+- ✅ **Примеры данных** - предустановленные таблицы с тестовыми данными
+- ✅ **Обработка ошибок** - понятные сообщения об ошибках SQL
+- ✅ **Автообновление схемы** - схема БД обновляется после DDL операций
+
+## Быстрый старт
+
+### Вариант 1: Через HTTP сервер (рекомендуется)
+
+**Linux/Mac:**
+```bash
+./start.sh
+```
+
+**Windows:**
+```cmd
+start.bat
+```
+
+**Или вручную:**
+```bash
+python3 -m http.server 8000
+```
+
+Затем откройте `http://localhost:8000` в браузере.
+
+### Вариант 2: Напрямую через браузер
+1. Откройте `index.html` в современном браузере
+2. Если возникают проблемы с CORS, используйте HTTP сервер
+
+### Использование
+1. Дождитесь загрузки SQLite WebAssembly
+2. Введите SQL запрос в текстовое поле или выберите готовый пример
+3. Нажмите "Выполнить запрос" или используйте Ctrl+Enter
+
+## Предустановленные таблицы
+
+При загрузке автоматически создаются две таблицы с тестовыми данными:
+
+### Таблица `users`
+```sql
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    age INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Таблица `orders`
+```sql
+CREATE TABLE orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    product_name TEXT NOT NULL,
+    amount REAL NOT NULL,
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+```
+
+## Примеры запросов
+
+### Простые запросы
+```sql
+-- Показать всех пользователей
+SELECT * FROM users;
+
+-- Показать заказы с именами пользователей
+SELECT u.name, o.product_name, o.amount, o.order_date
+FROM orders o
+JOIN users u ON o.user_id = u.id;
+
+-- Добавить нового пользователя
+INSERT INTO users (name, email, age) VALUES ('Новый Пользователь', 'new@example.com', 25);
+```
+
+### Сложные запросы
+```sql
+-- Сумма заказов по пользователям
+SELECT u.name, SUM(o.amount) as total_amount, COUNT(o.id) as order_count
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+GROUP BY u.id, u.name;
+
+-- Создать новую таблицу
+CREATE TABLE products (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    price REAL NOT NULL,
+    category TEXT
+);
+```
+
+## Технические детали
+
+- **SQLite WebAssembly**: Используется библиотека `sql.js` для запуска SQLite в браузере
+- **Загрузка с CDN**: WebAssembly файлы загружаются с официального CDN
+- **Обработка данных**: Результаты SELECT запросов отображаются в виде таблиц
+- **Безопасность**: Все операции выполняются локально в браузере
+
+## Требования
+
+- Современный браузер с поддержкой WebAssembly (Chrome 57+, Firefox 52+, Safari 11+)
+- Подключение к интернету для загрузки библиотеки sql.js (только при первом запуске)
+
+## Файлы проекта
+
+- `index.html` - основная веб-страница с интерфейсом
+- `app.js` - JavaScript код для работы с SQLite
+- `start.sh` - скрипт запуска для Linux/Mac
+- `start.bat` - скрипт запуска для Windows
+- `server.py` - продвинутый HTTP сервер (опциональный)
+- `simple_server.py` - упрощенный HTTP сервер (опциональный)
+- `README.md` - документация проекта
+
+## Ограничения
+
+- База данных существует только в памяти браузера
+- Данные не сохраняются между сессиями
+- Для персистентного хранения необходимо дополнительно реализовать сохранение в localStorage или IndexedDB
+
+## Развитие проекта
+
+Возможные улучшения:
+- Сохранение базы данных в localStorage
+- Импорт/экспорт SQL файлов
+- Подсветка синтаксиса SQL
+- История выполненных запросов
+- Автодополнение SQL команд
