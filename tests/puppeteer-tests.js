@@ -179,13 +179,37 @@ async function runTests() {
         // Тест 5: Выполнение SELECT запроса
         console.log('\n🧪 Тест 5: Выполнение SELECT запроса');
         
+        // Очищаем поле ввода полностью
+        await page.evaluate(() => document.getElementById('sql-input').value = '');
+        
+        // Ждем немного для обеспечения готовности
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         await page.type('#sql-input', 'SELECT COUNT(*) as total FROM users');
+        
+        // Дополнительная проверка готовности SQLite
+        await page.waitForFunction(
+            () => window.db !== null && window.SQL !== null,
+            { timeout: 5000 }
+        );
+        
         await page.click('#execute-btn');
         
-        // Ждем результаты
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Ждем завершения выполнения SQL (кнопка снова станет активной)
+        await page.waitForFunction(
+            () => {
+                const btn = document.getElementById('execute-btn');
+                return btn && !btn.disabled && btn.textContent === 'Выполнить запрос';
+            },
+            { timeout: 5000 }
+        );
+        
+        // Дополнительная небольшая пауза для обеспечения обновления DOM
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         const resultsContent = await page.$eval('#results-container', el => el.innerHTML);
+        console.log(`Содержимое результатов: ${resultsContent.substring(0, 200)}...`);
+        
         await runner.assertContains(resultsContent, 'total', 'Результат содержит колонку total');
         await runner.assertContains(resultsContent, '<table', 'Результат отображается в виде таблицы');
 
