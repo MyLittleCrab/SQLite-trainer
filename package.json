@@ -1,0 +1,29 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "Интерактивная веб-страница для работы с SQLite прямо в браузере с помощью WebAssembly.",
+  "main": "app.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/puppeteer-tests.js",
+    "test:puppeteer": "node tests/puppeteer-tests.js",
+    "test:browser": "echo 'Откройте http://localhost:8000/tests/test.html в браузере'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MyLittleCrab/SQLite-trainer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MyLittleCrab/SQLite-trainer/issues"
+  },
+  "homepage": "https://github.com/MyLittleCrab/SQLite-trainer#readme",
+  "devDependencies": {
+    "puppeteer": "^24.14.0",
+    "serve-handler": "^6.1.6"
+  }
+}
