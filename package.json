@@ -7,9 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node tests/puppeteer-tests.js",
-    "test:puppeteer": "node tests/puppeteer-tests.js",
-    "test:browser": "echo 'Откройте http://localhost:8000/tests/test.html в браузере'"
+    "test": "node tests/puppeteer-tests.js"
   },
   "repository": {
     "type": "git",
