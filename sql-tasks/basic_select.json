@@ -1,0 +1,21 @@
+{
+  "id": "basic_select",
+  "title": "Простая выборка данных",
+  "description": "Выберите всех студентов старше 20 лет. Покажите их имя и возраст.",
+  "initScript": [
+    "DROP TABLE IF EXISTS students;",
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
+    "INSERT INTO students (name, age) VALUES ('Анна', 19);",
+    "INSERT INTO students (name, age) VALUES ('Борис', 22);",
+    "INSERT INTO students (name, age) VALUES ('Виктория', 21);",
+    "INSERT INTO students (name, age) VALUES ('Георгий', 18);",
+    "INSERT INTO students (name, age) VALUES ('Дарья', 23);"
+  ],
+  "expectedResult": [
+    {"name": "Борис", "age": 22},
+    {"name": "Виктория", "age": 21}, 
+    {"name": "Дарья", "age": 23}
+  ],
+  "hint": "Используйте WHERE для фильтрации по возрасту",
+  "solution": "SELECT name, age FROM students WHERE age > 20;"
+}

@@ -98,6 +98,83 @@
             margin-top: 10px;
         }
         
+        /* Стили для задач */
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .task-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .task-description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 10px;
+        }
+        
+        .task-hint {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 10px;
+        }
+        
+        .task-status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .task-status.success {
+            color: #155724;
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        
+        .task-status.error {
+            color: #721c24;
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-hint {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .btn-hint:hover {
+            background: #e0a800;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -164,9 +241,17 @@
             </div>
             
             <div id="main-content" style="display: none;">
+                <!-- Текущая задача -->
+                <div class="section">
+                    <h3>🎯 Текущая задача</h3>
+                    <div id="task-content">
+                        <!-- Задача будет загружена здесь -->
+                    </div>
+                </div>
+
                 <!-- Схема базы данных -->
                 <div class="section">
-                    <h3>Схема базы данных</h3>
+                    <h3>📋 Схема базы данных</h3>
                     <div id="schema-container">
                         <div class="schema-table" id="schema-content">
                             <!-- Схема будет загружена здесь -->
@@ -176,23 +261,22 @@
                 
                 <!-- SQL редактор -->
                 <div class="section">
-                    <h3>SQL редактор</h3>
+                    <h3>💻 SQL редактор</h3>
                     <div class="examples">
-                        <button class="example-btn" onclick="setExample('SELECT * FROM users;')">Показать пользователей</button>
-                        <button class="example-btn" onclick="setExample('INSERT INTO users (name, email) VALUES (\'Иван Иванов\', \'ivan@example.com\');')">Добавить пользователя</button>
-                        <button class="example-btn" onclick="setExample('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL);')">Создать таблицу товаров</button>
+                        <button class="example-btn" onclick="setExample('SELECT * FROM students;')">Показать всех студентов</button>
+                        <button class="example-btn" onclick="setExample('SELECT name, age FROM students WHERE age > 20;')">Студенты старше 20</button>
                         <button class="example-btn" onclick="setExample('SELECT name, COUNT(*) as count FROM sqlite_master WHERE type=\'table\' GROUP BY name;')">Список таблиц</button>
                     </div>
                     <textarea 
                         class="sql-input" 
                         id="sql-input" 
-                        placeholder="Введите ваш SQL запрос здесь...">SELECT * FROM users;</textarea>
+                        placeholder="Введите ваш SQL запрос здесь...">SELECT * FROM students;</textarea>
                     <button class="btn" id="execute-btn" onclick="executeSQL()">Выполнить запрос</button>
                 </div>
                 
                 <!-- Результаты -->
                 <div class="section">
-                    <h3>Результаты</h3>
+                    <h3>📊 Результаты</h3>
                     <div id="results-container">
                         <p>Результаты выполнения появятся здесь...</p>
                     </div>
