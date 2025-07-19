@@ -5,30 +5,57 @@ let SQL = null;
 // Инициализация SQLite WebAssembly
 async function initSQLite() {
     try {
-        // Загружаем SQLite WebAssembly
+        document.getElementById('loading').innerHTML = 
+            'Загрузка SQLite WebAssembly модуля...';
+        
+        // Правильная инициализация sql.js
+        // initSqlJs возвращает промис, который резолвится с SQL объектом
         SQL = await initSqlJs({
+            // locateFile позволяет указать, где искать .wasm файлы
             locateFile: file => `https://sql.js.org/dist/${file}`
         });
         
-        // Создаем новую базу данных в памяти
+        console.log('SQLite WebAssembly модуль загружен успешно');
+        
+        document.getElementById('loading').innerHTML = 
+            'Создание базы данных...';
+        
+        // Только после успешной загрузки создаем базу данных
         db = new SQL.Database();
+        console.log('База данных создана в памяти');
+        
+        document.getElementById('loading').innerHTML = 
+            'Инициализация тестовых данных...';
         
         // Создаем примерные таблицы с данными
         createSampleData();
+        console.log('Тестовые данные созданы');
         
         // Обновляем схему
         updateSchema();
+        console.log('Схема базы данных обновлена');
         
         // Показываем основной контент
         document.getElementById('loading').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
         
-        console.log('SQLite успешно инициализирован');
+        console.log('SQLite успешно инициализирован и готов к работе');
         
     } catch (error) {
         console.error('Ошибка инициализации SQLite:', error);
+        
+        // Показываем детальную ошибку пользователю
+        let errorMessage = 'Ошибка загрузки SQLite: ' + error.message;
+        
+        if (error.message.includes('fetch')) {
+            errorMessage += '<br><br>Возможные причины:<br>';
+            errorMessage += '• Нет подключения к интернету<br>';
+            errorMessage += '• Заблокирован доступ к sql.js.org<br>';
+            errorMessage += '• Попробуйте обновить страницу';
+        }
+        
         document.getElementById('loading').innerHTML = 
-            '<div class="error">Ошибка загрузки SQLite: ' + error.message + '</div>';
+            '<div class="error">' + errorMessage + '</div>';
     }
 }
 
@@ -80,6 +107,13 @@ function createSampleData() {
 // Обновление отображения схемы базы данных
 function updateSchema() {
     try {
+        // Проверяем готовность
+        if (!db) {
+            document.getElementById('schema-content').innerHTML = 
+                '<p>База данных не готова</p>';
+            return;
+        }
+        
         // Получаем информацию о таблицах
         const stmt = db.prepare("SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;");
         const tables = [];
@@ -133,6 +167,12 @@ function executeSQL() {
     
     if (!sql) {
         resultsContainer.innerHTML = '<div class="error">Введите SQL запрос</div>';
+        return;
+    }
+    
+    // Проверяем, что SQLite полностью инициализирован
+    if (!SQL) {
+        resultsContainer.innerHTML = '<div class="error">SQLite WebAssembly еще загружается...</div>';
         return;
     }
     
