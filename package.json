@@ -9,7 +9,9 @@
   "scripts": {
     "start": "npx http-server -p 8000",
     "test": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:run\"",
-    "test:run": "node tests/puppeteer-tests.js"
+    "test:run": "node tests/run-all-tests.js",
+    "test:extended": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:extended:run\"",
+    "test:extended:run": "node tests/run-extended-tests.js"
   },
   "repository": {
     "type": "git",
