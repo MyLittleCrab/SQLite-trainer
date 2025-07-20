@@ -1,22 +1,31 @@
 {
   "id": "aggregation",
-  "title": "Агрегация данных",
-  "description": "Посчитайте количество студентов для каждого возраста. Покажите возраст и количество студентов.",
+  "title": {
+    "en": "Data Aggregation",
+    "ru": "Агрегация данных"
+  },
+  "description": {
+    "en": "Count the number of students for each age. Show age and student count.",
+    "ru": "Посчитайте количество студентов для каждого возраста. Покажите возраст и количество студентов."
+  },
   "initScript": [
     "DROP TABLE IF EXISTS students;",
     "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
-    "INSERT INTO students (name, age) VALUES ('Анна', 19);",
-    "INSERT INTO students (name, age) VALUES ('Борис', 22);",
-    "INSERT INTO students (name, age) VALUES ('Виктория', 21);",
-    "INSERT INTO students (name, age) VALUES ('Георгий', 22);",
-    "INSERT INTO students (name, age) VALUES ('Дарья', 21);",
-    "INSERT INTO students (name, age) VALUES ('Елена', 19);"
+    "INSERT INTO students (name, age) VALUES ('Anna', 19);",
+    "INSERT INTO students (name, age) VALUES ('Boris', 22);",
+    "INSERT INTO students (name, age) VALUES ('Victoria', 21);",
+    "INSERT INTO students (name, age) VALUES ('George', 22);",
+    "INSERT INTO students (name, age) VALUES ('Daria', 21);",
+    "INSERT INTO students (name, age) VALUES ('Elena', 19);"
   ],
   "expectedResult": [
     {"age": 19, "count": 2},
     {"age": 21, "count": 2},
     {"age": 22, "count": 2}
   ],
-  "hint": "Используйте GROUP BY и COUNT для подсчета",
+  "hint": {
+    "en": "Use GROUP BY and COUNT for aggregation",
+    "ru": "Используйте GROUP BY и COUNT для подсчета"
+  },
   "solution": "SELECT age, COUNT(*) as count FROM students GROUP BY age ORDER BY age;"
 }

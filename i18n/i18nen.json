@@ -1,0 +1,69 @@
+{
+  "header": {
+    "title": "Browser SQL Trainer",
+    "subtitle": "Trainer for learning SQL: execute queries, check results, database schema"
+  },
+  "loading": {
+    "sqlite": "Loading SQLite WebAssembly...",
+    "module": "Loading SQLite WebAssembly module...",
+    "database": "Creating database...",
+    "tasks": "Loading tasks..."
+  },
+  "error": {
+    "loading": "SQLite loading error: ",
+    "causes": "Possible causes:",
+    "no_internet": "• No internet connection",
+    "blocked_access": "• Access to sql.js.org is blocked",
+    "try_refresh": "• Try refreshing the page",
+    "tasks_loading": "Tasks loading error: ",
+    "no_tasks": "No available tasks",
+    "task_loading": "Task loading error: ",
+    "db_init": "Database initialization error for task: ",
+    "schema_update": "Schema update error: ",
+    "sql_execution": "SQL Error: ",
+    "enter_sql": "Enter SQL query",
+    "sqlite_loading": "SQLite WebAssembly is still loading...",
+    "db_not_initialized": "Database is not initialized",
+    "result_check": "Result check error: ",
+    "db_not_ready": "Database is not ready",
+    "tables_not_found": "Tables not found",
+    "count_error": "Could not get record count"
+  },
+  "section": {
+    "current_task": "🎯 Current Task",
+    "database_schema": "📋 Database Schema",
+    "sql_editor": "💻 SQL Editor",
+    "results": "📊 Results"
+  },
+  "task": {
+    "next_task": "Next Task",
+    "hint_label": "Hint:",
+    "show_hint": "Show Hint",
+    "hide_hint": "Hide Hint",
+    "correct": "Excellent! Task solved correctly!",
+    "wrong_rows": "Wrong number of rows. Expected: {expected}, got: {actual}",
+    "wrong_value": "Wrong value in row {row}, field \"{field}\". Expected: {expected}, got: {actual}"
+  },
+  "sql": {
+    "placeholder": "Enter your SQL query here...",
+    "execute": "Execute Query",
+    "executing": "Executing...",
+    "example_tables": "List Tables"
+  },
+  "results": {
+    "placeholder": "Execution results will appear here...",
+    "success_no_data": "Query executed successfully. No results found.",
+    "success_with_count": "Query executed successfully. Records found: ",
+    "success": "Query executed successfully."
+  },
+  "schema": {
+    "tables_title": "Tables in database:",
+    "records_count": "Records: ",
+    "loading_error": "Schema loading error: "
+  },
+  "lang": {
+    "switch": "Language",
+    "russian": "Русский",
+    "english": "English"
+  }
+}

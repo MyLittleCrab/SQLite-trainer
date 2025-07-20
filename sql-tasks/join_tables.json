@@ -1,26 +1,35 @@
 {
   "id": "join_tables",
-  "title": "Соединение таблиц",
-  "description": "Найдите всех студентов с их оценками по математике. Покажите имя студента и оценку.",
+  "title": {
+    "en": "Table Joins",
+    "ru": "Соединение таблиц"
+  },
+  "description": {
+    "en": "Find all students with their Math grades. Show student name and grade.",
+    "ru": "Найдите всех студентов с их оценками по математике. Покажите имя студента и оценку."
+  },
   "initScript": [
     "DROP TABLE IF EXISTS students;",
     "DROP TABLE IF EXISTS grades;",
     "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
     "CREATE TABLE grades (id INTEGER PRIMARY KEY, student_id INTEGER, subject TEXT, grade INTEGER);",
-    "INSERT INTO students (name, age) VALUES ('Анна', 19);",
-    "INSERT INTO students (name, age) VALUES ('Борис', 22);",
-    "INSERT INTO students (name, age) VALUES ('Виктория', 21);",
-    "INSERT INTO grades (student_id, subject, grade) VALUES (1, 'Математика', 5);",
-    "INSERT INTO grades (student_id, subject, grade) VALUES (2, 'Математика', 4);",
-    "INSERT INTO grades (student_id, subject, grade) VALUES (3, 'Математика', 5);",
-    "INSERT INTO grades (student_id, subject, grade) VALUES (1, 'Физика', 4);",
-    "INSERT INTO grades (student_id, subject, grade) VALUES (2, 'Физика', 3);"
+    "INSERT INTO students (name, age) VALUES ('Anna', 19);",
+    "INSERT INTO students (name, age) VALUES ('Boris', 22);",
+    "INSERT INTO students (name, age) VALUES ('Victoria', 21);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (1, 'Math', 5);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (2, 'Math', 4);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (3, 'Math', 5);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (1, 'Physics', 4);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (2, 'Physics', 3);"
   ],
   "expectedResult": [
-    {"name": "Анна", "grade": 5},
-    {"name": "Борис", "grade": 4},
-    {"name": "Виктория", "grade": 5}
+    {"name": "Anna", "grade": 5},
+    {"name": "Boris", "grade": 4},
+    {"name": "Victoria", "grade": 5}
   ],
-  "hint": "Используйте JOIN для соединения таблиц students и grades",
-  "solution": "SELECT s.name, g.grade FROM students s JOIN grades g ON s.id = g.student_id WHERE g.subject = 'Математика';"
+  "hint": {
+    "en": "Use JOIN to connect students and grades tables",
+    "ru": "Используйте JOIN для соединения таблиц students и grades"
+  },
+  "solution": "SELECT s.name, g.grade FROM students s JOIN grades g ON s.id = g.student_id WHERE g.subject = 'Math';"
 }
