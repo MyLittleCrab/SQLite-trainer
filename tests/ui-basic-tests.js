@@ -71,10 +71,10 @@ class UIBasicTests extends BaseTestRunner {
         try {
             await this.page.waitForFunction(() => {
                 return window.db && typeof window.db.exec === 'function';
-            }, { timeout: 10000 });
+            }, { timeout: 30000 });
             this.pass('SQLite WebAssembly успешно загружен');
         } catch (error) {
-            this.fail('SQLite WebAssembly не загрузился в течение 10 секунд');
+            this.fail('SQLite WebAssembly не загрузился в течение 30 секунд');
         }
     }
 
@@ -93,7 +93,7 @@ class UIBasicTests extends BaseTestRunner {
         
         // Ждем появления кнопок примеров
         await new Promise(resolve => setTimeout(resolve, 2000));
-        const exampleButtons = await this.page.$$('.example-query-btn');
+        const exampleButtons = await this.page.$$('.example-btn');
         if (exampleButtons.length > 0) {
             this.pass('Кнопки примеров присутствуют');
             

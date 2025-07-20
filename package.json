@@ -2,7 +2,7 @@
   "name": "workspace",
   "version": "1.0.0",
   "description": "Интерактивная веб-страница для работы с SQLite прямо в браузере с помощью WebAssembly.",
-  "main": "app.js",
+  "main": "src/app.js",
   "directories": {
     "test": "tests"
   },

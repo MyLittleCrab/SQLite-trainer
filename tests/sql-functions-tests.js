@@ -135,10 +135,10 @@ class SQLFunctionsTests extends BaseTestRunner {
             return modalBody ? modalBody.textContent : '';
         });
         
-        if (errorModalContent.toLowerCase().includes('error')) {
-            this.pass('Ошибка для не-SELECT запроса отображается (текст должен содержать: "error")');
+        if (errorModalContent.toLowerCase().includes('select')) {
+            this.pass('Ошибка для не-SELECT запроса отображается (текст должен содержать: "SELECT")');
         } else {
-            this.fail('Ошибка для не-SELECT запроса отображается (текст должен содержать: "error")');
+            this.fail('Ошибка для не-SELECT запроса отображается (текст должен содержать: "SELECT")');
         }
         
         // Закрываем модальное окно

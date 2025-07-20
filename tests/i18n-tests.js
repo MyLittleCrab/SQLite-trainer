@@ -123,7 +123,7 @@ class I18nTests extends BaseTestRunner {
         
         // Проверяем сохранение языка в localStorage
         const savedLanguage = await this.page.evaluate(() => {
-            return localStorage.getItem('selectedLanguage');
+            return localStorage.getItem('sqltrainer-language');
         });
         
         if (savedLanguage) {

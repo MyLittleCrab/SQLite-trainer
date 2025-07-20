@@ -32,7 +32,7 @@
    - Смена задач
    - Проверка подсказок
 
-4. **`sql-function-tests.js`** - Тесты SQL функций
+4. **`sql-functions-tests.js`** - Тесты SQL функций
    - Функция `executeTestSQL`
    - Функция `checkSolutionSQL`
    - Кнопки выполнения запросов

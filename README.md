@@ -104,7 +104,8 @@ npm run test:run
 ### Файловая структура
 ```
 SQLite-trainer/
-├── app.js                 # Основная логика приложения
+├── src
+│   └──app.js              # Основная логика приложения
 ├── index.html             # Интерфейс пользователя  
 ├── package.json           # NPM зависимости и скрипты
 ├── sql-tasks/             # Система задач
@@ -305,7 +306,8 @@ Open `http://localhost:8000/tests/test.html` to run tests in browser.
 ### File Structure
 ```
 SQLite-trainer/
-├── app.js                 # Main application logic
+├── src
+│   └──app.js              # Main application logic
 ├── index.html             # User interface
 ├── package.json           # NPM dependencies and scripts
 ├── sql-tasks/             # Task system
