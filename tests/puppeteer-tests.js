@@ -93,6 +93,175 @@ class SQLitePlaygroundTests {
         
         const schema = await this.page.$('#schema-content');
         await this.runner.assert(schema !== null, 'Область схемы присутствует');
+        
+        // Проверяем наличие переключателя языка
+        const languageSelect = await this.page.$('#language-select');
+        await this.runner.assert(languageSelect !== null, 'Переключатель языка присутствует');
+    }
+
+    async testI18nSystem() {
+        console.log('\n🧪 Тест: Проверка системы интернационализации');
+        
+        // Ждем загрузки i18n системы
+        try {
+            await this.page.waitForFunction(
+                () => window.i18n !== undefined,
+                { timeout: 5000 }
+            );
+            await this.runner.assert(true, 'Система i18n загружена');
+        } catch (error) {
+            await this.runner.assert(false, 'Система i18n не загрузилась');
+            return;
+        }
+        
+        // Проверяем наличие переводов
+        const hasTranslations = await this.page.evaluate(() => {
+            return typeof window.i18n === 'object' && 
+                   typeof window.i18n.t === 'function';
+        });
+        await this.runner.assert(hasTranslations, 'Функция перевода i18n.t доступна');
+        
+        // Проверяем элементы с data-i18n атрибутами
+        const i18nElements = await this.page.$$('[data-i18n]');
+        await this.runner.assert(i18nElements.length > 0, 'Найдены элементы с data-i18n атрибутами');
+        console.log(`Найдено ${i18nElements.length} элементов с data-i18n`);
+        
+        // Проверяем основные переводы
+        const headerTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
+        await this.runner.assert(headerTitle.length > 0, 'Заголовок переведен');
+        console.log(`Заголовок: "${headerTitle}"`);
+    }
+
+    async testLanguageSwitching() {
+        console.log('\n🧪 Тест: Переключение языков');
+        
+        // Получаем изначальный заголовок (английский)
+        const initialTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
+        console.log(`Изначальный заголовок: "${initialTitle}"`);
+        
+        // Переключаемся на русский
+        await this.page.select('#language-select', 'ru');
+        
+        // Ждем обновления интерфейса
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Проверяем, что заголовок изменился
+        const russianTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
+        console.log(`Русский заголовок: "${russianTitle}"`);
+        
+        await this.runner.assert(
+            russianTitle !== initialTitle && russianTitle.includes('тренажер'),
+            'Заголовок переведен на русский'
+        );
+        
+        // Проверяем другие элементы интерфейса
+        const executeButton = await this.page.$eval('[data-i18n="sql.execute"]', el => el.textContent);
+        await this.runner.assert(
+            executeButton.includes('Выполнить'),
+            'Кнопка "Выполнить запрос" переведена на русский'
+        );
+        
+        // Возвращаемся на английский
+        await this.page.select('#language-select', 'en');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const englishTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
+        await this.runner.assert(
+            englishTitle === initialTitle,
+            'Заголовок вернулся к английскому'
+        );
+        
+        // Проверяем сохранение языка в localStorage
+        const savedLanguage = await this.page.evaluate(() => {
+            return localStorage.getItem('sqltrainer-language');
+        });
+        await this.runner.assert(savedLanguage === 'en', 'Выбранный язык сохранен в localStorage');
+        
+        // Проверяем атрибут lang в HTML
+        const htmlLang = await this.page.evaluate(() => {
+            return document.documentElement.getAttribute('lang');
+        });
+        await this.runner.assert(htmlLang === 'en', 'Атрибут lang в HTML установлен корректно');
+        
+        // Дополнительно проверяем загрузку JSON файлов переводов
+        await this.testI18nFileLoading();
+    }
+    
+    async testI18nFileLoading() {
+        console.log('\n🧪 Тест: Проверка загрузки JSON файлов переводов');
+        
+        // Проверяем загрузку английских переводов
+        const enTranslations = await this.page.evaluate(async () => {
+            try {
+                const response = await fetch('./i18n/i18nen.json');
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        });
+        await this.runner.assert(enTranslations, 'Файл английских переводов загружается');
+        
+        // Проверяем загрузку русских переводов
+        const ruTranslations = await this.page.evaluate(async () => {
+            try {
+                const response = await fetch('./i18n/i18nru.json');
+                return response.ok;
+            } catch (error) {
+                return false;
+            }
+        });
+        await this.runner.assert(ruTranslations, 'Файл русских переводов загружается');
+        
+        // Проверяем содержимое переводов
+        const translationsData = await this.page.evaluate(async () => {
+            try {
+                const [enResponse, ruResponse] = await Promise.all([
+                    fetch('./i18n/i18nen.json'),
+                    fetch('./i18n/i18nru.json')
+                ]);
+                
+                const [enData, ruData] = await Promise.all([
+                    enResponse.json(),
+                    ruResponse.json()
+                ]);
+                
+                return {
+                    en: enData,
+                    ru: ruData,
+                    enKeys: Object.keys(enData).length,
+                    ruKeys: Object.keys(ruData).length
+                };
+            } catch (error) {
+                return null;
+            }
+        });
+        
+        if (translationsData) {
+            await this.runner.assert(
+                translationsData.enKeys > 0,
+                `Английские переводы содержат ${translationsData.enKeys} секций`
+            );
+            
+            await this.runner.assert(
+                translationsData.ruKeys > 0,
+                `Русские переводы содержат ${translationsData.ruKeys} секций`
+            );
+            
+            await this.runner.assert(
+                translationsData.enKeys === translationsData.ruKeys,
+                'Количество секций в английском и русском переводах совпадает'
+            );
+            
+            // Проверяем наличие ключевых переводов
+            const hasKeyTranslations = translationsData.en.header && 
+                                      translationsData.en.header.title &&
+                                      translationsData.ru.header && 
+                                      translationsData.ru.header.title;
+            
+            await this.runner.assert(hasKeyTranslations, 'Ключевые переводы (header.title) присутствуют');
+        } else {
+            await this.runner.assert(false, 'Не удалось загрузить и проверить содержимое переводов');
+        }
     }
 
     async testSQLiteInitialization() {
@@ -386,6 +555,8 @@ async function runTests() {
         // Запускаем все тесты последовательно / Run all tests sequentially
         await tests.testPageLoad();
         await tests.testUIElements();
+        await tests.testI18nSystem();
+        await tests.testLanguageSwitching();
         await tests.testSQLiteInitialization();
         await tests.testSchemaDisplay();
         await tests.testExampleQueries();
