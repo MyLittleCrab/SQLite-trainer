@@ -1,0 +1,29 @@
+{
+  "id": "subquery_in_where",
+  "title": {
+    "en": "Subquery in WHERE",
+    "ru": "Подзапрос в WHERE"
+  },
+  "description": {
+    "en": "Find students who are enrolled in 'Math'.",
+    "ru": "Найдите студентов, записанных на курс 'Math'."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE enrollments (student_id INTEGER, course_id INTEGER);",
+    "INSERT INTO students VALUES (1, 'Anna'), (2, 'Boris'), (3, 'Clara');",
+    "INSERT INTO courses VALUES (10, 'Math'), (20, 'History');",
+    "INSERT INTO enrollments VALUES (1, 10), (2, 20);"
+  ],
+  "expectedResult": [
+    {
+      "name": "Anna"
+    }
+  ],
+  "hint": {
+    "en": "Use a subquery in WHERE to find the course id for 'Math'",
+    "ru": "Используйте подзапрос в WHERE для поиска id курса 'Math'"
+  },
+  "solution": "SELECT name FROM students WHERE id IN (SELECT student_id FROM enrollments WHERE course_id = (SELECT id FROM courses WHERE name = 'Math'));"
+}

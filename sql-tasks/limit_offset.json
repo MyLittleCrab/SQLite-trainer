@@ -1,0 +1,28 @@
+{
+  "id": "limit_offset",
+  "title": {
+    "en": "LIMIT and OFFSET",
+    "ru": "LIMIT и OFFSET"
+  },
+  "description": {
+    "en": "Select the second and third students by name (alphabetically).",
+    "ru": "Выберите второго и третьего студентов по алфавиту."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT);",
+    "INSERT INTO students (name) VALUES ('Diana'), ('Anna'), ('Boris'), ('Clara');"
+  ],
+  "expectedResult": [
+    {
+      "name": "Boris"
+    },
+    {
+      "name": "Clara"
+    }
+  ],
+  "hint": {
+    "en": "Use ORDER BY name with LIMIT and OFFSET",
+    "ru": "Используйте ORDER BY name с LIMIT и OFFSET"
+  },
+  "solution": "SELECT name FROM students ORDER BY name LIMIT 2 OFFSET 1;"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "having_clause",
+  "title": {
+    "en": "GROUP BY with HAVING",
+    "ru": "GROUP BY с HAVING"
+  },
+  "description": {
+    "en": "List ages that have more than one student.",
+    "ru": "Выведите возрасты, на которых более одного студента."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
+    "INSERT INTO students (name, age) VALUES ('Anna', 19), ('Boris', 22), ('Victor', 22), ('Daria', 19), ('Elena', 20);"
+  ],
+  "expectedResult": [
+    {
+      "age": 19
+    },
+    {
+      "age": 22
+    }
+  ],
+  "hint": {
+    "en": "Use GROUP BY and HAVING COUNT(*) > 1",
+    "ru": "Используйте GROUP BY и HAVING COUNT(*) > 1"
+  },
+  "solution": "SELECT age FROM students GROUP BY age HAVING COUNT(*) > 1;"
+}

@@ -1,0 +1,34 @@
+{
+  "id": "case_statement",
+  "title": {
+    "en": "CASE Statement",
+    "ru": "Оператор CASE"
+  },
+  "description": {
+    "en": "Show student names and a label 'minor' or 'adult' depending on their age (< 21 is minor).",
+    "ru": "Покажите имена студентов и отметку 'minor' или 'adult' в зависимости от возраста (<21 — minor)."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
+    "INSERT INTO students (name, age) VALUES ('Anna', 19), ('Boris', 21), ('Diana', 23);"
+  ],
+  "expectedResult": [
+    {
+      "name": "Anna",
+      "label": "minor"
+    },
+    {
+      "name": "Boris",
+      "label": "adult"
+    },
+    {
+      "name": "Diana",
+      "label": "adult"
+    }
+  ],
+  "hint": {
+    "en": "Use CASE WHEN age < 21 THEN ...",
+    "ru": "Используйте CASE WHEN age < 21 THEN ..."
+  },
+  "solution": "SELECT name, CASE WHEN age < 21 THEN 'minor' ELSE 'adult' END AS label FROM students;"
+}

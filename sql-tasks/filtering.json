@@ -1,0 +1,32 @@
+{
+  "id": "filtering",
+  "title": {
+    "en": "Filtering Data",
+    "ru": "Фильтрация данных"
+  },
+  "description": {
+    "en": "Select all students older than 20.",
+    "ru": "Выберите всех студентов старше 20 лет."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
+    "INSERT INTO students (name, age) VALUES ('Anna', 19);",
+    "INSERT INTO students (name, age) VALUES ('Boris', 22);",
+    "INSERT INTO students (name, age) VALUES ('Victoria', 21);"
+  ],
+  "expectedResult": [
+    {
+      "name": "Boris",
+      "age": 22
+    },
+    {
+      "name": "Victoria",
+      "age": 21
+    }
+  ],
+  "hint": {
+    "en": "Use WHERE clause to filter rows",
+    "ru": "Используйте WHERE для фильтрации строк"
+  },
+  "solution": "SELECT name, age FROM students WHERE age > 20;"
+}

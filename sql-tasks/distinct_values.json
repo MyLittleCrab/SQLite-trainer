@@ -1,0 +1,30 @@
+{
+  "id": "distinct_values",
+  "title": {
+    "en": "DISTINCT Values",
+    "ru": "Уникальные значения"
+  },
+  "description": {
+    "en": "List all distinct course names from enrollments.",
+    "ru": "Выведите все уникальные названия курсов из записей."
+  },
+  "initScript": [
+    "CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE enrollments (student_id INTEGER, course_id INTEGER);",
+    "INSERT INTO courses (id, name) VALUES (1, 'Math'), (2, 'Math'), (3, 'Biology');",
+    "INSERT INTO enrollments (student_id, course_id) VALUES (1, 1), (2, 2), (3, 3);"
+  ],
+  "expectedResult": [
+    {
+      "name": "Math"
+    },
+    {
+      "name": "Biology"
+    }
+  ],
+  "hint": {
+    "en": "Use DISTINCT with JOIN",
+    "ru": "Используйте DISTINCT с JOIN"
+  },
+  "solution": "SELECT DISTINCT c.name FROM courses c JOIN enrollments e ON c.id = e.course_id;"
+}

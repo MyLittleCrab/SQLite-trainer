@@ -1,0 +1,34 @@
+{
+  "id": "join",
+  "title": {
+    "en": "Join Tables",
+    "ru": "Объединение таблиц"
+  },
+  "description": {
+    "en": "Show all students with their course names.",
+    "ru": "Покажите всех студентов с названиями их курсов."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE enrollments (student_id INTEGER, course_id INTEGER);",
+    "INSERT INTO students (id, name) VALUES (1, 'Anna'), (2, 'Boris');",
+    "INSERT INTO courses (id, name) VALUES (10, 'Math'), (20, 'History');",
+    "INSERT INTO enrollments (student_id, course_id) VALUES (1, 10), (2, 20);"
+  ],
+  "expectedResult": [
+    {
+      "name": "Anna",
+      "course": "Math"
+    },
+    {
+      "name": "Boris",
+      "course": "History"
+    }
+  ],
+  "hint": {
+    "en": "Use JOIN to combine multiple tables",
+    "ru": "Используйте JOIN для объединения таблиц"
+  },
+  "solution": "SELECT s.name, c.name AS course FROM students s JOIN enrollments e ON s.id = e.student_id JOIN courses c ON e.course_id = c.id;"
+}

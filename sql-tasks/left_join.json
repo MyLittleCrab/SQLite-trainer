@@ -1,0 +1,38 @@
+{
+  "id": "left_join",
+  "title": {
+    "en": "LEFT JOIN",
+    "ru": "LEFT JOIN"
+  },
+  "description": {
+    "en": "List all students with their course name if available.",
+    "ru": "Выведите всех студентов и название их курса, если есть."
+  },
+  "initScript": [
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE courses (id INTEGER PRIMARY KEY, name TEXT);",
+    "CREATE TABLE enrollments (student_id INTEGER, course_id INTEGER);",
+    "INSERT INTO students (id, name) VALUES (1, 'Anna'), (2, 'Boris'), (3, 'Lena');",
+    "INSERT INTO courses (id, name) VALUES (10, 'Math'), (20, 'Biology');",
+    "INSERT INTO enrollments (student_id, course_id) VALUES (1, 10), (2, 20);"
+  ],
+  "expectedResult": [
+    {
+      "name": "Anna",
+      "course": "Math"
+    },
+    {
+      "name": "Boris",
+      "course": "Biology"
+    },
+    {
+      "name": "Lena",
+      "course": null
+    }
+  ],
+  "hint": {
+    "en": "Use LEFT JOIN to keep unmatched rows",
+    "ru": "Используйте LEFT JOIN для сохранения всех строк из левой таблицы"
+  },
+  "solution": "SELECT s.name, c.name AS course FROM students s LEFT JOIN enrollments e ON s.id = e.student_id LEFT JOIN courses c ON e.course_id = c.id;"
+}
