@@ -1,7 +1,7 @@
-const { BaseTest } = require('./utils/test-config');
+const BaseTestRunner = require('./base-test-runner');
 
 // Класс для тестов интернационализации
-class I18nTests extends BaseTest {
+class I18nTests extends BaseTestRunner {
     async testI18nSystem() {
         console.log('\n🧪 Тест: Проверка системы интернационализации');
         
@@ -208,9 +208,30 @@ class I18nTests extends BaseTest {
                                       translationsData.ru.header && 
                                       translationsData.ru.header.title;
             
-            await this.runner.assert(hasKeyTranslations, 'Ключевые переводы (header.title) присутствуют');
+            if (hasKeyTranslations) {
+                this.pass('Ключевые переводы (header.title) присутствуют');
+            } else {
+                this.fail('Ключевые переводы (header.title) присутствуют');
+            }
         } else {
-            await this.runner.assert(false, 'Не удалось загрузить и проверить содержимое переводов');
+            this.fail('Не удалось загрузить и проверить содержимое переводов');
+        }
+    }
+
+    // Метод для запуска всех i18n тестов
+    async runAllTests() {
+        console.log('\n🌍 === ТЕСТЫ ИНТЕРНАЦИОНАЛИЗАЦИИ === 🌍\n');
+        
+        try {
+            await this.testI18nSystem();
+            await this.testLanguageSwitching();
+            await this.testI18nFileLoading();
+            
+            return this.summary();
+        } catch (error) {
+            console.error('❌ Критическая ошибка при выполнении i18n тестов:', error);
+            this.fail(`Критическая ошибка: ${error.message}`);
+            return false;
         }
     }
 }

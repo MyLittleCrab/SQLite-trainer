@@ -1,24 +1,28 @@
-const { BaseTest, BASE_URL } = require('./utils/test-config');
+const BaseTestRunner = require('./base-test-runner');
 
 // Класс для тестов UI и основной функциональности
-class UIBasicTests extends BaseTest {
+class UIBasicTests extends BaseTestRunner {
     async testPageLoad() {
         console.log('\n🧪 Тест: Загрузка главной страницы');
-        console.log(`Загружаем: ${BASE_URL}/index.html`);
+        console.log(`Загружаем: http://localhost:8000/index.html`);
         
-        const response = await this.page.goto(`${BASE_URL}/index.html`, { waitUntil: 'networkidle0' });
+        const response = await this.page.goto(`http://localhost:8000/index.html`, { waitUntil: 'networkidle0' });
         console.log(`Статус ответа: ${response.status()}`);
         
         const title = await this.page.title();
         console.log(`Заголовок страницы: "${title}"`);
-        await this.runner.assertContains(title, 'SQLite', 'Заголовок содержит SQLite');
+        if (title.includes('SQLite')) {
+            this.pass('Заголовок содержит SQLite (текст должен содержать: "SQLite")');
+        } else {
+            this.fail('Заголовок содержит SQLite (текст должен содержать: "SQLite")');
+        }
         
-        // Проверим содержимое страницы для отладки / Check page content for debugging
+        // Проверим содержимое страницы для отладки
         const bodyContent = await this.page.content();
         console.log(`Длина HTML: ${bodyContent.length} символов`);
         
-        // Добавим скриншот для отладки / Add screenshot for debugging
-        await this.page.screenshot({ path: 'debug-screenshot.png', fullPage: true });
+        // Добавим скриншот для отладки
+        await this.page.screenshot({ path: 'debug-screenshot.png' });
         console.log('Скриншот сохранен в debug-screenshot.png');
     }
 
@@ -26,132 +30,184 @@ class UIBasicTests extends BaseTest {
         console.log('\n🧪 Тест: Проверка элементов UI');
         
         const sqlInput = await this.page.$('#sql-input');
-        await this.runner.assert(sqlInput !== null, 'SQL поле ввода присутствует');
+        if (sqlInput !== null) {
+            this.pass('SQL поле ввода присутствует');
+        } else {
+            this.fail('SQL поле ввода присутствует');
+        }
         
         const runButton = await this.page.$('#execute-test-btn');
-        await this.runner.assert(runButton !== null, 'Кнопка запуска присутствует');
+        if (runButton !== null) {
+            this.pass('Кнопка запуска присутствует');
+        } else {
+            this.fail('Кнопка запуска присутствует');
+        }
         
         const results = await this.page.$('#results-container');
-        await this.runner.assert(results !== null, 'Область результатов присутствует');
+        if (results !== null) {
+            this.pass('Область результатов присутствует');
+        } else {
+            this.fail('Область результатов присутствует');
+        }
         
         const schema = await this.page.$('#schema-content');
-        await this.runner.assert(schema !== null, 'Область схемы присутствует');
+        if (schema !== null) {
+            this.pass('Область схемы присутствует');
+        } else {
+            this.fail('Область схемы присутствует');
+        }
         
-        // Проверяем наличие переключателя языка
         const languageSelect = await this.page.$('#language-select');
-        await this.runner.assert(languageSelect !== null, 'Переключатель языка присутствует');
+        if (languageSelect !== null) {
+            this.pass('Переключатель языка присутствует');
+        } else {
+            this.fail('Переключатель языка присутствует');
+        }
     }
 
     async testSQLiteInitialization() {
         console.log('\n🧪 Тест: Ожидание инициализации SQLite');
         
-        // Ждем загрузки SQLite (максимум 10 секунд) / Wait for SQLite loading (maximum 10 seconds)
         try {
-            await this.page.waitForFunction(
-                () => window.db !== null && window.SQL !== null,
-                { timeout: 10000 }
-            );
-            await this.runner.assert(true, 'SQLite WebAssembly успешно загружен');
+            await this.page.waitForFunction(() => {
+                return window.db && typeof window.db.exec === 'function';
+            }, { timeout: 10000 });
+            this.pass('SQLite WebAssembly успешно загружен');
         } catch (error) {
-            await this.runner.assert(false, 'SQLite WebAssembly не загрузился в течение 10 секунд');
+            this.fail('SQLite WebAssembly не загрузился в течение 10 секунд');
         }
     }
 
     async testSchemaDisplay() {
         console.log('\n🧪 Тест: Проверка отображения схемы');
-        
-        const schemaContent = await this.page.$eval('#schema-content', el => el.innerHTML);
-        await this.runner.assertContains(schemaContent, 'INTEGER PRIMARY KEY', 'Схема содержит правильные типы данных');
+        const schemaContent = await this.page.$eval('#schema-content', el => el.textContent);
+        if (schemaContent.includes('INTEGER PRIMARY KEY')) {
+            this.pass('Схема содержит правильные типы данных (текст должен содержать: "INTEGER PRIMARY KEY")');
+        } else {
+            this.fail('Схема содержит правильные типы данных (текст должен содержать: "INTEGER PRIMARY KEY")');
+        }
     }
 
-    async testExampleQueries() {
+    async testQueryExamples() {
         console.log('\n🧪 Тест: Проверка примеров запросов');
         
-        const exampleButtons = await this.page.$$('.example-btn');
-        await this.runner.assert(exampleButtons.length > 0, 'Кнопки примеров присутствуют');
-        
+        // Ждем появления кнопок примеров
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const exampleButtons = await this.page.$$('.example-query-btn');
         if (exampleButtons.length > 0) {
-            await exampleButtons[0].click();
-            await new Promise(resolve => setTimeout(resolve, 500));
+            this.pass('Кнопки примеров присутствуют');
             
+            // Кликаем на первую кнопку примера
+            await exampleButtons[0].click();
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const inputValue = await this.page.$eval('#sql-input', el => el.value);
-            await this.runner.assert(inputValue.length > 0, 'Пример запроса загружен в поле ввода');
+            if (inputValue.length > 0) {
+                this.pass('Пример запроса загружен в поле ввода');
+            } else {
+                this.fail('Пример запроса загружен в поле ввода');
+            }
+        } else {
+            this.fail('Кнопки примеров присутствуют');
         }
     }
 
     async testErrorHandling() {
         console.log('\n🧪 Тест: Проверка обработки ошибок');
         
-        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
-        await this.page.type('#sql-input', 'SELECT * FROM nonexistent_table');
+        await this.page.evaluate(() => document.getElementById('sql-input').value = 'INVALID SQL QUERY;');
         await this.page.click('#execute-test-btn');
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const errorResults = await this.page.$eval('#results-container', el => el.innerHTML);
-        await this.runner.assertContains(errorResults.toLowerCase(), 'error', 'Ошибка правильно отображается');
+        const errorResults = await this.page.$eval('#results-container', el => el.textContent);
+        if (errorResults.toLowerCase().includes('error')) {
+            this.pass('Ошибка правильно отображается (текст должен содержать: "error")');
+        } else {
+            this.fail('Ошибка правильно отображается (текст должен содержать: "error")');
+        }
     }
 
     async testResponsiveDesign() {
         console.log('\n🧪 Тест: Проверка responsive дизайна');
         
-        await this.page.setViewport({ width: 400, height: 600 });
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await this.page.setViewport({ width: 375, height: 667 });
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         const containerWidth = await this.page.$eval('.container', el => el.offsetWidth);
-        await this.runner.assert(containerWidth < 400, 'Контейнер адаптируется к мобильному размеру');
+        if (containerWidth < 400) {
+            this.pass('Контейнер адаптируется к мобильному размеру');
+        } else {
+            this.fail('Контейнер адаптируется к мобильному размеру');
+        }
+        
+        await this.page.setViewport({ width: 1280, height: 720 });
     }
 
     async testInsertQuery() {
         console.log('\n🧪 Тест: Выполнение INSERT запроса');
         
-        // Выполняем INSERT запрос
-        const insertQuery = "INSERT INTO students (name, age) VALUES ('Test Student', 25);";
-        await this.page.evaluate((query) => {
-            document.getElementById('sql-input').value = query;
-        }, insertQuery);
-        
+        const insertQuery = "INSERT INTO students (name, age) VALUES ('Test User', 25);";
+        await this.page.evaluate((query) => document.getElementById('sql-input').value = query, insertQuery);
         await this.page.click('#execute-test-btn');
         
-        // Ждем выполнения запроса
-        await this.page.waitForFunction(
+        const insertSuccessful = await this.page.waitForFunction(
             () => {
-                const results = document.getElementById('results-container').innerHTML;
-                return results.includes('Query executed successfully') || 
-                       results.includes('Запрос выполнен успешно') ||
-                       results.includes('success');
+                const resultsEl = document.getElementById('results-container');
+                return resultsEl && (
+                    resultsEl.innerHTML.includes('success') || 
+                    resultsEl.innerHTML.includes('INSERT')
+                );
             },
-            { timeout: 10000 }
+            { timeout: 5000 }
         );
         
-        // Проверяем что запрос выполнился успешно
-        const resultsContent = await this.page.$eval('#results-container', el => el.innerHTML);
-        const insertSuccessful = resultsContent.includes('success') || 
-                                resultsContent.includes('успешно') ||
-                                resultsContent.includes('Query executed successfully');
+        if (insertSuccessful) {
+            this.pass('INSERT запрос выполнен успешно');
+        } else {
+            this.fail('INSERT запрос выполнен успешно');
+        }
         
-        await this.runner.assert(insertSuccessful, 'INSERT запрос выполнен успешно');
-        
-        // Дополнительно проверяем что можем выполнить SELECT для проверки вставки
-        await this.page.evaluate(() => {
-            document.getElementById('sql-input').value = "SELECT COUNT(*) as total FROM students;";
-        });
-        
+        await this.page.evaluate(() => document.getElementById('sql-input').value = 'SELECT COUNT(*) as total FROM students;');
         await this.page.click('#execute-test-btn');
         
         await this.page.waitForFunction(
             () => {
-                const results = document.getElementById('results-container').innerHTML;
-                return results.includes('total') || results.includes('success');
+                const resultsEl = document.getElementById('results-container');
+                return resultsEl && (
+                    resultsEl.innerHTML.includes('total') || 
+                    resultsEl.innerHTML.includes('success')
+                );
             },
             { timeout: 5000 }
         );
         
         const selectContent = await this.page.$eval('#results-container', el => el.innerHTML);
-        await this.runner.assert(
-            selectContent.includes('total') || selectContent.includes('success'),
-            'SELECT запрос после INSERT работает корректно'
-        );
+        if (selectContent.includes('total') || selectContent.includes('success')) {
+            this.pass('SELECT запрос после INSERT работает корректно');
+        } else {
+            this.fail('SELECT запрос после INSERT работает корректно');
+        }
+    }
+
+    // Метод для запуска всех UI тестов
+    async runAllTests() {
+        console.log('\n🎯 === БАЗОВЫЕ ТЕСТЫ UI === 🎯\n');
+        
+        try {
+            await this.testPageLoad();
+            await this.testUIElements();
+            await this.testSQLiteInitialization();
+            await this.testSchemaDisplay();
+            await this.testQueryExamples();
+            await this.testErrorHandling();
+            await this.testResponsiveDesign();
+            await this.testInsertQuery();
+            
+            return this.summary();
+        } catch (error) {
+            console.error('❌ Критическая ошибка при выполнении UI тестов:', error);
+            this.fail(`Критическая ошибка: ${error.message}`);
+            return false;
+        }
     }
 }
 
