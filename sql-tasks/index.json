@@ -34,5 +34,125 @@
       "ru": "Посчитайте количество студентов для каждого возраста"
     },
     "file": "aggregation.json"
+  },
+  {
+    "id": "case_statement",
+    "title": {
+      "en": "CASE Statement",
+      "ru": "Оператор CASE"
+    },
+    "description": {
+      "en": "Show student names and a label 'minor' or 'adult' depending on their age (< 21 is minor).",
+      "ru": "Покажите имена студентов и отметку 'minor' или 'adult' в зависимости от возраста (<21 — minor)."
+    },
+    "file": "case_statement.json"
+  },
+  {
+    "id": "distinct_values",
+    "title": {
+      "en": "DISTINCT Values",
+      "ru": "Уникальные значения"
+    },
+    "description": {
+      "en": "List all distinct course names from enrollments.",
+      "ru": "Выведите все уникальные названия курсов из записей."
+    },
+    "file": "distinct_values.json"
+  },
+  {
+    "id": "having_clause",
+    "title": {
+      "en": "GROUP BY with HAVING",
+      "ru": "GROUP BY с HAVING"
+    },
+    "description": {
+      "en": "List ages that have more than one student.",
+      "ru": "Выведите возрасты, на которых более одного студента."
+    },
+    "file": "having_clause.json"
+  },
+  {
+    "id": "left_join",
+    "title": {
+      "en": "LEFT JOIN",
+      "ru": "LEFT JOIN"
+    },
+    "description": {
+      "en": "List all students with their course name if available.",
+      "ru": "Выведите всех студентов и название их курса, если есть."
+    },
+    "file": "left_join.json"
+  },
+  {
+    "id": "limit_offset",
+    "title": {
+      "en": "LIMIT and OFFSET",
+      "ru": "LIMIT и OFFSET"
+    },
+    "description": {
+      "en": "Select the second and third students by name (alphabetically).",
+      "ru": "Выберите второго и третьего студентов по алфавиту."
+    },
+    "file": "limit_offset.json"
+  },
+  {
+    "id": "null_checking",
+    "title": {
+      "en": "NULL Checking",
+      "ru": "Проверка NULL"
+    },
+    "description": {
+      "en": "List students who are not enrolled in any course.",
+      "ru": "Выведите студентов, не записанных ни на один курс."
+    },
+    "file": "null_checking.json"
+  },
+  {
+    "id": "order_by_multiple",
+    "title": {
+      "en": "ORDER BY Multiple Columns",
+      "ru": "Сортировка по нескольким столбцам"
+    },
+    "description": {
+      "en": "List students ordered by age ascending and then by name descending.",
+      "ru": "Выведите студентов, отсортированных по возрасту по возрастанию, а затем по имени по убыванию."
+    },
+    "file": "order_by_multiple.json"
+  },
+  {
+    "id": "subquery_in_where",
+    "title": {
+      "en": "Subquery in WHERE",
+      "ru": "Подзапрос в WHERE"
+    },
+    "description": {
+      "en": "Find students who are enrolled in 'Math'.",
+      "ru": "Найдите студентов, записанных на курс 'Math'."
+    },
+    "file": "subquery_in_where.json"
+  },
+  {
+    "id": "filtering",
+    "title": {
+      "en": "Filtering Data",
+      "ru": "Фильтрация данных"
+    },
+    "description": {
+      "en": "Select all students older than 20.",
+      "ru": "Выберите всех студентов старше 20 лет."
+    },
+    "file": "filtering.json"
+  },
+  {
+    "id": "join",
+    "title": {
+      "en": "Join Tables",
+      "ru": "Объединение таблиц"
+    },
+    "description": {
+      "en": "Show all students with their course names.",
+      "ru": "Покажите всех студентов с названиями их курсов."
+    },
+    "file": "join.json"
   }
 ]
