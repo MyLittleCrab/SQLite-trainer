@@ -27,7 +27,8 @@
     "result_check": "Result check error: ",
     "db_not_ready": "Database is not ready",
     "tables_not_found": "Tables not found",
-    "count_error": "Could not get record count"
+    "count_error": "Could not get record count",
+    "use_select_query": "Use SELECT query to check the task"
   },
   "section": {
     "current_task": "🎯 Current Task",
@@ -42,12 +43,18 @@
     "hide_hint": "Hide Hint",
     "correct": "Excellent! Task solved correctly!",
     "wrong_rows": "Wrong number of rows. Expected: {expected}, got: {actual}",
-    "wrong_value": "Wrong value in row {row}, field \"{field}\". Expected: {expected}, got: {actual}"
+    "wrong_value": "Wrong value in row {row}, field \"{field}\". Expected: {expected}, got: {actual}",
+    "check_result_title": "Task Check Result",
+    "your_result": "Your result:",
+    "close": "Close"
   },
   "sql": {
     "placeholder": "Enter your SQL query here...",
     "execute": "Execute Query",
+    "execute_test": "Execute Test Query",
+    "check_solution": "Check Task Solution",
     "executing": "Executing...",
+    "checking": "Checking...",
     "example_tables": "List Tables"
   },
   "results": {
