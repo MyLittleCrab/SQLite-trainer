@@ -46,6 +46,7 @@ class I18n {
     async fetchTranslations(lang) {
         try {
             const response = await fetch(`./i18n/i18n${lang}.json`);
+            
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
