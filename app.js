@@ -140,44 +140,11 @@ async function loadRandomTask() {
 
 // Вспомогательная функция для получения файла текущей задачи
 function getCurrentTaskFile() {
-    if (!currentTask) return null;
+    if (!currentTask || !currentTask.id) return null;
     
-    // Ищем файл текущей задачи в списке всех задач
-    for (const task of allTasks) {
-        if (task.id === currentTask.id) {
-            return task.file;
-        }
-        
-        // Проверяем совпадение по заголовку с учетом локализации
-        if (currentTask.title && task.title) {
-            // Если оба заголовка - строки
-            if (typeof currentTask.title === 'string' && typeof task.title === 'string') {
-                if (task.title === currentTask.title) {
-                    return task.file;
-                }
-            }
-            // Если оба заголовка - объекты с локализацией
-            else if (typeof currentTask.title === 'object' && typeof task.title === 'object') {
-                if ((currentTask.title.en && task.title.en && currentTask.title.en === task.title.en) ||
-                    (currentTask.title.ru && task.title.ru && currentTask.title.ru === task.title.ru)) {
-                    return task.file;
-                }
-            }
-            // Смешанный случай - текущая задача объект, задача из списка строка
-            else if (typeof currentTask.title === 'object' && typeof task.title === 'string') {
-                if (currentTask.title.en === task.title || currentTask.title.ru === task.title) {
-                    return task.file;
-                }
-            }
-            // Смешанный случай - текущая задача строка, задача из списка объект
-            else if (typeof currentTask.title === 'string' && typeof task.title === 'object') {
-                if (task.title.en === currentTask.title || task.title.ru === currentTask.title) {
-                    return task.file;
-                }
-            }
-        }
-    }
-    return null;
+    // Ищем файл текущей задачи в списке всех задач по ID
+    const task = allTasks.find(task => task.id === currentTask.id);
+    return task ? task.file : null;
 }
 
 // Загрузка конкретной задачи / Loading specific task
