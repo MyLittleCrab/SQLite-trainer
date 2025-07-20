@@ -1,21 +1,30 @@
 {
   "id": "basic_select",
-  "title": "Простая выборка данных",
-  "description": "Выберите всех студентов старше 20 лет. Покажите их имя и возраст.",
+  "title": {
+    "en": "Basic Data Selection",
+    "ru": "Простая выборка данных"
+  },
+  "description": {
+    "en": "Select all students older than 20 years. Show their name and age.",
+    "ru": "Выберите всех студентов старше 20 лет. Покажите их имя и возраст."
+  },
   "initScript": [
     "DROP TABLE IF EXISTS students;",
     "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
-    "INSERT INTO students (name, age) VALUES ('Анна', 19);",
-    "INSERT INTO students (name, age) VALUES ('Борис', 22);",
-    "INSERT INTO students (name, age) VALUES ('Виктория', 21);",
-    "INSERT INTO students (name, age) VALUES ('Георгий', 18);",
-    "INSERT INTO students (name, age) VALUES ('Дарья', 23);"
+    "INSERT INTO students (name, age) VALUES ('Anna', 19);",
+    "INSERT INTO students (name, age) VALUES ('Boris', 22);",
+    "INSERT INTO students (name, age) VALUES ('Victoria', 21);",
+    "INSERT INTO students (name, age) VALUES ('George', 18);",
+    "INSERT INTO students (name, age) VALUES ('Daria', 23);"
   ],
   "expectedResult": [
-    {"name": "Борис", "age": 22},
-    {"name": "Виктория", "age": 21}, 
-    {"name": "Дарья", "age": 23}
+    {"name": "Boris", "age": 22},
+    {"name": "Victoria", "age": 21}, 
+    {"name": "Daria", "age": 23}
   ],
-  "hint": "Используйте WHERE для фильтрации по возрасту",
+  "hint": {
+    "en": "Use WHERE to filter by age",
+    "ru": "Используйте WHERE для фильтрации по возрасту"
+  },
   "solution": "SELECT name, age FROM students WHERE age > 20;"
 }
