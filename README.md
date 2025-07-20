@@ -16,7 +16,6 @@
 
 ## 🚀 Быстрый старт
 
-### Вариант 1: NPM (рекомендуется)
 ```bash
 # Клонируйте репозиторий
 git clone https://github.com/MyLittleCrab/SQLite-trainer.git
@@ -218,7 +217,6 @@ An interactive web-based SQL trainer using SQLite WebAssembly. Practice SQL quer
 
 ## 🚀 Quick Start
 
-### Option 1: NPM (Recommended)
 ```bash
 # Clone repository
 git clone https://github.com/MyLittleCrab/SQLite-trainer.git
