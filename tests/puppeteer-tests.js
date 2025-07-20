@@ -838,10 +838,19 @@ class SQLitePlaygroundTests {
         await this.page.evaluate(() => document.getElementById('sql-input').value = '');
         await this.page.type('#sql-input', 'SELECT 42 as answer');
         
+        // Проверяем что SQL запрос действительно в поле
+        const sqlValue = await this.page.$eval('#sql-input', el => el.value);
+        console.log('🔍 SQL в поле перед кликом:', sqlValue);
+        
+        // Добавляем небольшую задержку для стабильности
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         await this.page.click('#execute-test-btn');
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         const resultsAfterClick = await this.page.$eval('#results-container', el => el.innerHTML);
+        console.log('🔍 Фактическое содержимое результатов:', resultsAfterClick);
+        
         await this.runner.assertContains(resultsAfterClick, '42', 'Результат отображается после клика по кнопке');
         await this.runner.assertContains(resultsAfterClick, 'answer', 'Название колонки отображается');
     }
