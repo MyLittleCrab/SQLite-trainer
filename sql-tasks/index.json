@@ -1,20 +1,38 @@
 [
   {
     "id": "basic_select",
-    "title": "Простая выборка данных",
-    "description": "Выберите всех студентов старше 20 лет",
+    "title": {
+      "en": "Basic Data Selection",
+      "ru": "Простая выборка данных"
+    },
+    "description": {
+      "en": "Select all students older than 20 years",
+      "ru": "Выберите всех студентов старше 20 лет"
+    },
     "file": "basic_select.json"
   },
   {
     "id": "join_tables",
-    "title": "Соединение таблиц", 
-    "description": "Найдите всех студентов с их оценками",
+    "title": {
+      "en": "Table Joins",
+      "ru": "Соединение таблиц"
+    },
+    "description": {
+      "en": "Find all students with their Math grades",
+      "ru": "Найдите всех студентов с их оценками по математике"
+    },
     "file": "join_tables.json"
   },
   {
     "id": "aggregation",
-    "title": "Агрегация данных",
-    "description": "Посчитайте количество студентов по возрасту",
+    "title": {
+      "en": "Data Aggregation", 
+      "ru": "Агрегация данных"
+    },
+    "description": {
+      "en": "Count the number of students for each age",
+      "ru": "Посчитайте количество студентов для каждого возраста"
+    },
     "file": "aggregation.json"
   }
 ]
