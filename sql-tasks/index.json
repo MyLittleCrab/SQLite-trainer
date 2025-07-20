@@ -1,0 +1,20 @@
+[
+  {
+    "id": "basic_select",
+    "title": "Простая выборка данных",
+    "description": "Выберите всех студентов старше 20 лет",
+    "file": "basic_select.json"
+  },
+  {
+    "id": "join_tables",
+    "title": "Соединение таблиц", 
+    "description": "Найдите всех студентов с их оценками",
+    "file": "join_tables.json"
+  },
+  {
+    "id": "aggregation",
+    "title": "Агрегация данных",
+    "description": "Посчитайте количество студентов по возрасту",
+    "file": "aggregation.json"
+  }
+]

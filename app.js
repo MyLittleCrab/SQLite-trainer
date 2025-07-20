@@ -1,6 +1,8 @@
 // Глобальные переменные
 let db = null;
 let SQL = null;
+let currentTask = null;
+let allTasks = [];
 
 // Инициализация SQLite WebAssembly
 async function initSQLite() {
@@ -25,11 +27,11 @@ async function initSQLite() {
         console.log('База данных создана в памяти');
         
         document.getElementById('loading').innerHTML = 
-            'Инициализация тестовых данных...';
+            'Загрузка задач...';
         
-        // Создаем примерные таблицы с данными
-        createSampleData();
-        console.log('Тестовые данные созданы');
+        // Загружаем задачи
+        await loadTasks();
+        console.log('Задачи загружены');
         
         // Обновляем схему
         updateSchema();
@@ -59,49 +61,145 @@ async function initSQLite() {
     }
 }
 
-// Создание примерных данных
-function createSampleData() {
-    // Создаем таблицу пользователей
-    db.exec(`
-        CREATE TABLE users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            age INTEGER,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        );
-    `);
+// Загрузка задач
+async function loadTasks() {
+    try {
+        const response = await fetch('sql-tasks/index.json');
+        allTasks = await response.json();
+        console.log('Загружено задач:', allTasks.length);
+        
+        // Показываем случайную задачу при запуске
+        loadRandomTask();
+    } catch (error) {
+        console.error('Ошибка загрузки задач:', error);
+        document.getElementById('task-content').innerHTML = 
+            '<div class="error">Ошибка загрузки задач: ' + error.message + '</div>';
+    }
+}
+
+// Загрузка случайной задачи
+async function loadRandomTask() {
+    if (allTasks.length === 0) {
+        document.getElementById('task-content').innerHTML = 
+            '<div class="error">Нет доступных задач</div>';
+        return;
+    }
     
-    // Добавляем примерных пользователей
-    db.exec(`
-        INSERT INTO users (name, email, age) VALUES 
-        ('Алексей Петров', 'alexey@example.com', 25),
-        ('Мария Иванова', 'maria@example.com', 30),
-        ('Дмитрий Сидоров', 'dmitry@example.com', 28),
-        ('Елена Козлова', 'elena@example.com', 22);
-    `);
+    const randomIndex = Math.floor(Math.random() * allTasks.length);
+    const taskRef = allTasks[randomIndex];
     
-    // Создаем таблицу заказов
-    db.exec(`
-        CREATE TABLE orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            product_name TEXT NOT NULL,
-            amount REAL NOT NULL,
-            order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        );
-    `);
+    try {
+        const response = await fetch(`sql-tasks/${taskRef.file}`);
+        currentTask = await response.json();
+        
+        // Инициализируем базу данных для задачи
+        initTaskDatabase();
+        
+        // Отображаем задачу
+        displayTask();
+        
+        // Обновляем схему
+        updateSchema();
+        
+    } catch (error) {
+        console.error('Ошибка загрузки задачи:', error);
+        document.getElementById('task-content').innerHTML = 
+            '<div class="error">Ошибка загрузки задачи: ' + error.message + '</div>';
+    }
+}
+
+// Инициализация базы данных для задачи
+function initTaskDatabase() {
+    if (!currentTask || !currentTask.initScript) return;
     
-    // Добавляем примерные заказы
-    db.exec(`
-        INSERT INTO orders (user_id, product_name, amount) VALUES 
-        (1, 'Ноутбук', 75000.00),
-        (2, 'Смартфон', 25000.00),
-        (1, 'Мышь', 1500.00),
-        (3, 'Клавиатура', 3000.00),
-        (4, 'Монитор', 20000.00);
-    `);
+    try {
+        // Выполняем скрипт инициализации
+        for (const query of currentTask.initScript) {
+            db.exec(query);
+        }
+        console.log('База данных инициализирована для задачи:', currentTask.title);
+    } catch (error) {
+        console.error('Ошибка инициализации базы данных для задачи:', error);
+    }
+}
+
+// Отображение текущей задачи
+function displayTask() {
+    if (!currentTask) return;
+    
+    const taskContent = document.getElementById('task-content');
+    taskContent.innerHTML = `
+        <div class="task-header">
+            <h3>${currentTask.title}</h3>
+            <button onclick="loadRandomTask()" class="btn-secondary">Следующая задача</button>
+        </div>
+        <div class="task-description">
+            <p>${currentTask.description}</p>
+        </div>
+        <div class="task-hint" style="display: none;">
+            <p><strong>Подсказка:</strong> ${currentTask.hint}</p>
+        </div>
+        <button onclick="toggleHint()" class="btn-hint">Показать подсказку</button>
+        <div class="task-status" id="task-status"></div>
+    `;
+}
+
+// Показать/скрыть подсказку
+function toggleHint() {
+    const hintDiv = document.querySelector('.task-hint');
+    const button = document.querySelector('.btn-hint');
+    
+    if (hintDiv.style.display === 'none') {
+        hintDiv.style.display = 'block';
+        button.textContent = 'Скрыть подсказку';
+    } else {
+        hintDiv.style.display = 'none';
+        button.textContent = 'Показать подсказку';
+    }
+}
+
+// Проверка результата запроса
+function checkTaskResult(userResult) {
+    if (!currentTask || !currentTask.expectedResult) return false;
+    
+    try {
+        // Сравниваем результаты
+        const expected = currentTask.expectedResult;
+        
+        // Проверяем количество строк
+        if (userResult.length !== expected.length) {
+            showTaskStatus(false, `Неверное количество строк. Ожидается: ${expected.length}, получено: ${userResult.length}`);
+            return false;
+        }
+        
+        // Проверяем каждую строку
+        for (let i = 0; i < expected.length; i++) {
+            const expectedRow = expected[i];
+            const userRow = userResult[i];
+            
+            // Проверяем каждое поле
+            for (const field in expectedRow) {
+                if (userRow[field] !== expectedRow[field]) {
+                    showTaskStatus(false, `Неверное значение в строке ${i + 1}, поле "${field}". Ожидается: ${expectedRow[field]}, получено: ${userRow[field]}`);
+                    return false;
+                }
+            }
+        }
+        
+        showTaskStatus(true, 'Отлично! Задача решена верно!');
+        return true;
+        
+    } catch (error) {
+        showTaskStatus(false, 'Ошибка при проверке результата: ' + error.message);
+        return false;
+    }
+}
+
+// Показать статус выполнения задачи
+function showTaskStatus(success, message) {
+    const statusDiv = document.getElementById('task-status');
+    statusDiv.className = `task-status ${success ? 'success' : 'error'}`;
+    statusDiv.innerHTML = message;
 }
 
 // Обновление отображения схемы базы данных
@@ -226,6 +324,11 @@ function executeSQL() {
                 
                 tableHTML += '</tbody></table>';
                 resultsContainer.innerHTML = tableHTML;
+                
+                // Проверяем результат задачи, если задача активна
+                if (currentTask) {
+                    checkTaskResult(results);
+                }
             }
         } else {
             // Для других запросов (INSERT, UPDATE, DELETE, CREATE, etc.)

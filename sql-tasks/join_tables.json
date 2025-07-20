@@ -1,0 +1,26 @@
+{
+  "id": "join_tables",
+  "title": "Соединение таблиц",
+  "description": "Найдите всех студентов с их оценками по математике. Покажите имя студента и оценку.",
+  "initScript": [
+    "DROP TABLE IF EXISTS students;",
+    "DROP TABLE IF EXISTS grades;",
+    "CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);",
+    "CREATE TABLE grades (id INTEGER PRIMARY KEY, student_id INTEGER, subject TEXT, grade INTEGER);",
+    "INSERT INTO students (name, age) VALUES ('Анна', 19);",
+    "INSERT INTO students (name, age) VALUES ('Борис', 22);",
+    "INSERT INTO students (name, age) VALUES ('Виктория', 21);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (1, 'Математика', 5);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (2, 'Математика', 4);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (3, 'Математика', 5);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (1, 'Физика', 4);",
+    "INSERT INTO grades (student_id, subject, grade) VALUES (2, 'Физика', 3);"
+  ],
+  "expectedResult": [
+    {"name": "Анна", "grade": 5},
+    {"name": "Борис", "grade": 4},
+    {"name": "Виктория", "grade": 5}
+  ],
+  "hint": "Используйте JOIN для соединения таблиц students и grades",
+  "solution": "SELECT s.name, g.grade FROM students s JOIN grades g ON s.id = g.student_id WHERE g.subject = 'Математика';"
+}

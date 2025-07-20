@@ -296,6 +296,86 @@ async function runTests() {
         
         await runner.assert(endTime - startTime < 5000, 'Сложный запрос выполняется менее чем за 5 секунд');
 
+        // Тест: Система задач
+        console.log('\n🧪 Тест: Система задач');
+        
+        // Проверяем наличие секции задач
+        const taskContent = await page.$('#task-content');
+        await runner.assert(taskContent !== null, 'Секция задач присутствует');
+        
+        // Проверяем загрузку задачи
+        await page.waitForSelector('.task-header', { timeout: 10000 });
+        const taskHeader = await page.$('.task-header h3');
+        await runner.assert(taskHeader !== null, 'Заголовок задачи отображается');
+        
+        const taskTitle = await page.evaluate(el => el.textContent, taskHeader);
+        console.log(`Загружена задача: "${taskTitle}"`);
+        
+        // Проверяем кнопку "Следующая задача"
+        const nextTaskButton = await page.$('.task-header button');
+        await runner.assert(nextTaskButton !== null, 'Кнопка "Следующая задача" присутствует');
+        
+        // Проверяем описание задачи
+        const taskDescription = await page.$('.task-description');
+        await runner.assert(taskDescription !== null, 'Описание задачи присутствует');
+        
+        // Проверяем кнопку подсказки
+        const hintButton = await page.$('.btn-hint');
+        await runner.assert(hintButton !== null, 'Кнопка подсказки присутствует');
+        
+        // Тестируем подсказку
+        await hintButton.click();
+        await page.waitForSelector('.task-hint', { visible: true });
+        const hintVisible = await page.$eval('.task-hint', el => el.style.display !== 'none');
+        await runner.assert(hintVisible, 'Подсказка отображается после клика');
+        
+        // Тест выполнения задачи
+        console.log('\n🧪 Тест: Выполнение SQL задачи');
+        
+        // Вводим правильный SQL запрос для простой задачи
+        await page.evaluate(() => {
+            document.getElementById('sql-input').value = 'SELECT name, age FROM students WHERE age > 20;';
+        });
+        
+        // Выполняем запрос
+        await page.click('#execute-btn');
+        
+        // Ждем появления результатов
+        await page.waitForFunction(
+            () => document.querySelector('#results-container table') !== null,
+            { timeout: 10000 }
+        );
+        
+        // Проверяем статус задачи
+        await page.waitForSelector('#task-status', { timeout: 5000 });
+        const taskStatus = await page.$('#task-status');
+        const statusClass = await page.evaluate(el => el.className, taskStatus);
+        await runner.assert(statusClass.includes('success'), 'Задача решена успешно');
+        
+        console.log('✅ Задача выполнена успешно');
+        
+        // Тест смены задачи
+        console.log('\n🧪 Тест: Смена задачи');
+        
+        const oldTaskTitle = taskTitle;
+        await page.click('.task-header button'); // Кнопка "Следующая задача"
+        
+        // Ждем загрузки новой задачи
+        await page.waitForFunction(
+            (oldTitle) => {
+                const newTitle = document.querySelector('.task-header h3');
+                return newTitle && newTitle.textContent !== oldTitle;
+            },
+            {},
+            oldTaskTitle
+        );
+        
+        const newTaskHeader = await page.$('.task-header h3');
+        const newTaskTitle = await page.evaluate(el => el.textContent, newTaskHeader);
+        await runner.assert(newTaskTitle !== oldTaskTitle, 'Задача изменилась');
+        
+        console.log(`Новая задача: "${newTaskTitle}"`);
+
     } catch (error) {
         console.error('❌ Критическая ошибка при выполнении тестов:', error);
         await runner.assert(false, `Критическая ошибка: ${error.message}`);
