@@ -171,17 +171,50 @@ async function loadTask(taskRef) {
     }
 }
 
+// Удаление всех пользовательских таблиц / Delete all user tables
+function dropAllTables() {
+    if (!db) return;
+    
+    try {
+        // Получаем список всех пользовательских таблиц / Get list of all user tables
+        const stmt = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+        const tables = [];
+        
+        while (stmt.step()) {
+            tables.push(stmt.getAsObject().name);
+        }
+        stmt.free();
+        
+        // Удаляем каждую таблицу / Drop each table
+        for (const tableName of tables) {
+            try {
+                db.exec(`DROP TABLE IF EXISTS ${tableName}`);
+                console.log(`Таблица ${tableName} удалена`);
+            } catch (error) {
+                console.error(`Ошибка удаления таблицы ${tableName}:`, error);
+            }
+        }
+        
+        if (tables.length > 0) {
+            console.log(`Удалено таблиц: ${tables.length}`);
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении таблиц:', error);
+    }
+}
+
 // Инициализация базы данных для задачи / Database initialization for task
 function initTaskDatabase() {
     if (!currentTask || !currentTask.initScript) return;
     
     try {
+        // Удаляем все существующие таблицы перед инициализацией новой задачи / Delete all existing tables before initializing new task
+        dropAllTables();
+        
         // Выполняем скрипт инициализации задачи / Execute task initialization script
         for (const query of currentTask.initScript) {
             db.exec(query);
         }
-        
-
         
         const taskTitle = typeof currentTask.title === 'object' 
             ? (currentTask.title[i18n.getCurrentLanguage()] || currentTask.title.en || currentTask.title.ru)
@@ -246,7 +279,8 @@ function checkTaskResult(userResult) {
         
         // Проверяем количество строк / Check number of rows
         if (userResult.length !== expected.length) {
-            showTaskStatus(false, i18n.t('task.wrong_rows', {expected: expected.length, actual: userResult.length}));
+            const errorMessage = i18n.t('task.wrong_rows', {expected: expected.length, actual: userResult.length});
+            showTaskResultModal('<div class="error">' + errorMessage + '</div>');
             return false;
         }
         
@@ -258,22 +292,23 @@ function checkTaskResult(userResult) {
             // Проверяем каждое поле / Check each field
             for (const field in expectedRow) {
                 if (userRow[field] !== expectedRow[field]) {
-                    showTaskStatus(false, i18n.t('task.wrong_value', {
+                    const errorMessage = i18n.t('task.wrong_value', {
                         row: i + 1, 
                         field: field, 
                         expected: expectedRow[field], 
                         actual: userRow[field]
-                    }));
+                    });
+                    showTaskResultModal('<div class="error">' + errorMessage + '</div>');
                     return false;
                 }
             }
         }
         
-        showTaskStatus(true, i18n.t('task.correct'));
         return true;
         
     } catch (error) {
-        showTaskStatus(false, i18n.t('error.result_check') + error.message);
+        const errorMessage = i18n.t('error.result_check') + error.message;
+        showTaskResultModal('<div class="error">' + errorMessage + '</div>');
         return false;
     }
 }
@@ -338,11 +373,11 @@ function updateSchema() {
     }
 }
 
-// Выполнение SQL запроса / SQL query execution
-function executeSQL() {
+// Выполнение тестового SQL запроса (без проверки задачи) / Execute test SQL query (without task checking)
+function executeTestSQL() {
     const sqlInput = document.getElementById('sql-input');
     const resultsContainer = document.getElementById('results-container');
-    const executeBtn = document.getElementById('execute-btn');
+    const executeTestBtn = document.getElementById('execute-test-btn');
     
     const sql = sqlInput.value.trim();
     
@@ -363,8 +398,8 @@ function executeSQL() {
     }
     
     // Отключаем кнопку на время выполнения / Disable button during execution
-    executeBtn.disabled = true;
-    executeBtn.textContent = i18n.t('sql.executing');
+    executeTestBtn.disabled = true;
+    executeTestBtn.textContent = i18n.t('sql.executing');
     
     try {
         // Определяем тип запроса / Determine query type
@@ -407,11 +442,6 @@ function executeSQL() {
                 
                 tableHTML += '</tbody></table>';
                 resultsContainer.innerHTML = tableHTML;
-                
-                // Проверяем результат задачи, если задача активна / Check task result if task is active
-                if (currentTask) {
-                    checkTaskResult(results);
-                }
             }
         } else {
             // Для других запросов (INSERT, UPDATE, DELETE, CREATE, etc.) / For other queries (INSERT, UPDATE, DELETE, CREATE, etc.)
@@ -435,8 +465,100 @@ function executeSQL() {
         resultsContainer.innerHTML = '<div class="error">' + i18n.t('error.sql_execution') + error.message + '</div>';
     } finally {
         // Включаем кнопку обратно / Enable button back
-        executeBtn.disabled = false;
-        executeBtn.textContent = i18n.t('sql.execute');
+        executeTestBtn.disabled = false;
+        executeTestBtn.textContent = i18n.t('sql.execute_test');
+    }
+}
+
+// Выполнение и проверка решения задачи / Execute and check task solution
+function checkSolutionSQL() {
+    const sqlInput = document.getElementById('sql-input');
+    const checkSolutionBtn = document.getElementById('check-solution-btn');
+    
+    const sql = sqlInput.value.trim();
+    
+    if (!sql) {
+        showTaskResultModal('<div class="error">' + i18n.t('error.enter_sql') + '</div>');
+        return;
+    }
+    
+    // Проверяем, что SQLite полностью инициализирован / Check that SQLite is fully initialized
+    if (!SQL) {
+        showTaskResultModal('<div class="error">' + i18n.t('error.sqlite_loading') + '</div>');
+        return;
+    }
+    
+    if (!db) {
+        showTaskResultModal('<div class="error">' + i18n.t('error.db_not_initialized') + '</div>');
+        return;
+    }
+    
+    if (!currentTask) {
+        showTaskResultModal('<div class="error">' + i18n.t('error.no_tasks') + '</div>');
+        return;
+    }
+    
+    // Отключаем кнопку на время выполнения / Disable button during execution
+    checkSolutionBtn.disabled = true;
+    checkSolutionBtn.textContent = i18n.t('sql.checking');
+    
+    try {
+        // Определяем тип запроса / Determine query type
+        const isSelectQuery = sql.toLowerCase().trim().startsWith('select');
+        
+        if (isSelectQuery) {
+            // Для SELECT запросов выполняем и проверяем результаты / For SELECT queries execute and check results
+            const stmt = db.prepare(sql);
+            const results = [];
+            const columns = stmt.getColumnNames();
+            
+            while (stmt.step()) {
+                results.push(stmt.getAsObject());
+            }
+            stmt.free();
+            
+            // Проверяем результат задачи / Check task result
+            const isCorrect = checkTaskResult(results);
+            
+                         if (isCorrect) {
+                 let tableHTML = '<div class="success">' + i18n.t('task.correct') + '</div>';
+                 if (results.length > 0) {
+                     tableHTML += '<h4>' + i18n.t('task.your_result') + '</h4>';
+                     tableHTML += '<table><thead><tr>';
+                    
+                    // Заголовки столбцов / Column headers
+                    columns.forEach(col => {
+                        tableHTML += `<th>${col}</th>`;
+                    });
+                    tableHTML += '</tr></thead><tbody>';
+                    
+                    // Данные / Data
+                    results.forEach(row => {
+                        tableHTML += '<tr>';
+                        columns.forEach(col => {
+                            let value = row[col];
+                            if (value === null) value = '<em>NULL</em>';
+                            if (value === undefined) value = '<em>undefined</em>';
+                            tableHTML += `<td>${value}</td>`;
+                        });
+                        tableHTML += '</tr>';
+                    });
+                    
+                    tableHTML += '</tbody></table>';
+                }
+                showTaskResultModal(tableHTML);
+            }
+                 } else {
+             showTaskResultModal('<div class="error">' + i18n.t('error.use_select_query') + '</div>');
+         }
+        
+    } catch (error) {
+        console.error('Ошибка выполнения SQL:', error);
+        showTaskResultModal('<div class="error">' + i18n.t('error.sql_execution') + error.message + '</div>');
+    } finally {
+        // Включаем кнопку обратно / Enable button back
+        checkSolutionBtn.disabled = false;
+        checkSolutionBtn.textContent = i18n.t('sql.check_solution');
     }
 }
 
@@ -445,7 +567,27 @@ function setExample(sql) {
     document.getElementById('sql-input').value = sql;
 }
 
+// Показать модальное окно с результатом проверки задачи / Show modal with task check result
+function showTaskResultModal(content) {
+    const modal = document.getElementById('task-result-modal');
+    const modalContent = document.getElementById('task-result-content');
+    
+    modalContent.innerHTML = content;
+    modal.classList.add('show');
+    
+    // Закрытие модального окна при клике на фон / Close modal when clicking on background
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            closeTaskResultModal();
+        }
+    };
+}
 
+// Закрыть модальное окно / Close modal window
+function closeTaskResultModal() {
+    const modal = document.getElementById('task-result-modal');
+    modal.classList.remove('show');
+}
 
 // Функция переключения языка / Language switching function
 async function changeLanguage(lang) {
@@ -473,10 +615,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     const sqlInput = document.getElementById('sql-input');
     
     sqlInput.addEventListener('keydown', function(event) {
-        // Ctrl+Enter или Cmd+Enter для выполнения запроса / Ctrl+Enter or Cmd+Enter to execute query
+        // Ctrl+Enter или Cmd+Enter для выполнения тестового запроса / Ctrl+Enter or Cmd+Enter to execute test query
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault();
-            executeSQL();
+            executeTestSQL();
+        }
+    });
+    
+    // Закрытие модального окна по клавише Escape / Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeTaskResultModal();
         }
     });
 });
