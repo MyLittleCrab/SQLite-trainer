@@ -45,7 +45,7 @@ class I18n {
     // Получение переводов с сервера
     async fetchTranslations(lang) {
         try {
-            const response = await fetch(`/i18n/i18n${lang}.json`);
+            const response = await fetch(`../i18n/i18n${lang}.json`);
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
