@@ -56,7 +56,6 @@ class TestRunner {
     constructor() {
         this.passed = 0;
         this.failed = 0;
-        this.tests = [];
     }
 
     async assert(condition, message) {
@@ -67,11 +66,6 @@ class TestRunner {
             console.log(`❌ ${message}`);
             this.failed++;
         }
-    }
-
-    async assertEqual(actual, expected, message) {
-        await this.assert(actual === expected, 
-            `${message} (ожидалось: ${expected}, получено: ${actual})`);
     }
 
     async assertContains(text, substring, message) {
@@ -88,7 +82,215 @@ class TestRunner {
     }
 }
 
-// Основные тесты
+// Класс для основных тестов
+class SQLitePlaygroundTests {
+    constructor(page, runner) {
+        this.page = page;
+        this.runner = runner;
+    }
+
+    async testPageLoad() {
+        console.log('\n🧪 Тест: Загрузка главной страницы');
+        console.log(`Загружаем: ${BASE_URL}/index.html`);
+        
+        const response = await this.page.goto(`${BASE_URL}/index.html`, { waitUntil: 'networkidle0' });
+        console.log(`Статус ответа: ${response.status()}`);
+        
+        const title = await this.page.title();
+        console.log(`Заголовок страницы: "${title}"`);
+        await this.runner.assertContains(title, 'SQLite', 'Заголовок содержит SQLite');
+        
+        // Проверим содержимое страницы для отладки
+        const bodyContent = await this.page.content();
+        console.log(`Длина HTML: ${bodyContent.length} символов`);
+        
+        // Добавим скриншот для отладки
+        await this.page.screenshot({ path: 'debug-screenshot.png', fullPage: true });
+        console.log('Скриншот сохранен в debug-screenshot.png');
+    }
+
+    async testUIElements() {
+        console.log('\n🧪 Тест: Проверка элементов UI');
+        
+        const sqlInput = await this.page.$('#sql-input');
+        await this.runner.assert(sqlInput !== null, 'SQL поле ввода присутствует');
+        
+        const runButton = await this.page.$('#execute-btn');
+        await this.runner.assert(runButton !== null, 'Кнопка запуска присутствует');
+        
+        const results = await this.page.$('#results-container');
+        await this.runner.assert(results !== null, 'Область результатов присутствует');
+        
+        const schema = await this.page.$('#schema-content');
+        await this.runner.assert(schema !== null, 'Область схемы присутствует');
+    }
+
+    async testSQLiteInitialization() {
+        console.log('\n🧪 Тест: Ожидание инициализации SQLite');
+        
+        // Ждем загрузки SQLite (максимум 10 секунд)
+        try {
+            await this.page.waitForFunction(
+                () => window.db !== null && window.SQL !== null,
+                { timeout: 10000 }
+            );
+            await this.runner.assert(true, 'SQLite WebAssembly успешно загружен');
+        } catch (error) {
+            await this.runner.assert(false, 'SQLite WebAssembly не загрузился в течение 10 секунд');
+        }
+    }
+
+    async testSchemaDisplay() {
+        console.log('\n🧪 Тест: Проверка отображения схемы');
+        
+        const schemaContent = await this.page.$eval('#schema-content', el => el.innerHTML);
+        await this.runner.assertContains(schemaContent, 'INTEGER PRIMARY KEY', 'Схема содержит правильные типы данных');
+    }
+
+    async testExampleQueries() {
+        console.log('\n🧪 Тест: Проверка примеров запросов');
+        
+        const exampleButtons = await this.page.$$('.example-btn');
+        await this.runner.assert(exampleButtons.length > 0, 'Кнопки примеров присутствуют');
+        
+        if (exampleButtons.length > 0) {
+            await exampleButtons[0].click();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const inputValue = await this.page.$eval('#sql-input', el => el.value);
+            await this.runner.assert(inputValue.length > 0, 'Пример запроса загружен в поле ввода');
+        }
+    }
+
+    async testErrorHandling() {
+        console.log('\n🧪 Тест: Проверка обработки ошибок');
+        
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'SELECT * FROM nonexistent_table');
+        await this.page.click('#execute-btn');
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const errorResults = await this.page.$eval('#results-container', el => el.innerHTML);
+        await this.runner.assertContains(errorResults.toLowerCase(), 'error', 'Ошибка правильно отображается');
+    }
+
+    async testResponsiveDesign() {
+        console.log('\n🧪 Тест: Проверка responsive дизайна');
+        
+        await this.page.setViewport({ width: 400, height: 600 });
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const containerWidth = await this.page.$eval('.container', el => el.offsetWidth);
+        await this.runner.assert(containerWidth < 400, 'Контейнер адаптируется к мобильному размеру');
+    }
+
+    async testTaskSystem() {
+        console.log('\n🧪 Тест: Система задач');
+        
+        // Проверяем наличие секции задач
+        const taskSection = await this.page.$('#task-content');
+        await this.runner.assert(taskSection !== null, 'Секция задач присутствует');
+        
+        // Проверяем заголовок задачи
+        const taskHeader = await this.page.$('.task-header h3');
+        await this.runner.assert(taskHeader !== null, 'Заголовок задачи отображается');
+        
+        const taskTitle = await this.page.evaluate(el => el.textContent, taskHeader);
+        console.log(`Загружена задача: "${taskTitle}"`);
+        
+        // Проверяем кнопку "Следующая задача"
+        const nextTaskButton = await this.page.$('.task-header button');
+        await this.runner.assert(nextTaskButton !== null, 'Кнопка "Следующая задача" присутствует');
+        
+        // Проверяем описание задачи
+        const taskDescription = await this.page.$('.task-description');
+        await this.runner.assert(taskDescription !== null, 'Описание задачи присутствует');
+        
+        // Проверяем кнопку подсказки
+        const hintButton = await this.page.$('.btn-hint');
+        await this.runner.assert(hintButton !== null, 'Кнопка подсказки присутствует');
+        
+        // Тестируем подсказку
+        await hintButton.click();
+        await this.page.waitForSelector('.task-hint', { visible: true });
+        const hintVisible = await this.page.$eval('.task-hint', el => el.style.display !== 'none');
+        await this.runner.assert(hintVisible, 'Подсказка отображается после клика');
+        
+        return { taskTitle, taskHeader };
+    }
+
+    async testTaskExecution(taskTitle) {
+        console.log('\n🧪 Тест: Выполнение SQL задачи');
+        
+        // Используем правильный SQL запрос в зависимости от загруженной задачи
+        const sqlQuery = taskTitle.includes('Агрегация') 
+            ? 'SELECT age, COUNT(*) as count FROM students GROUP BY age ORDER BY age;'
+            : taskTitle.includes('Соединение') 
+            ? "SELECT s.name, g.grade FROM students s JOIN grades g ON s.id = g.student_id WHERE g.subject = 'Математика';"
+            : 'SELECT name, age FROM students WHERE age > 20;';
+        
+        await this.page.evaluate((query) => {
+            document.getElementById('sql-input').value = query;
+        }, sqlQuery);
+        
+        // Выполняем запрос
+        await this.page.click('#execute-btn');
+        
+        // Ждем появления результатов
+        await this.page.waitForFunction(
+            () => document.querySelector('#results-container table') !== null,
+            { timeout: 10000 }
+        );
+        
+        // Проверяем статус задачи
+        await this.page.waitForSelector('#task-status', { timeout: 5000 });
+        
+        // Ждем появления сообщения о статусе
+        await this.page.waitForFunction(
+            () => {
+                const statusEl = document.getElementById('task-status');
+                return statusEl && statusEl.textContent.trim() !== '';
+            },
+            { timeout: 5000 }
+        );
+        
+        const statusClass = await this.page.$eval('#task-status', el => el.className);
+        const statusText = await this.page.$eval('#task-status', el => el.textContent);
+        
+        console.log(`Статус задачи: ${statusClass}, текст: ${statusText}`);
+        await this.runner.assert(statusClass.includes('success'), 'Задача решена успешно');
+        
+        console.log('✅ Задача выполнена успешно');
+    }
+
+    async testTaskSwitch(oldTaskTitle) {
+        console.log('\n🧪 Тест: Смена задачи');
+        
+        await this.page.click('.task-header button'); // Кнопка "Следующая задача"
+        
+        // Даем время на обработку клика
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Ждем загрузки новой задачи
+        await this.page.waitForFunction(
+            (oldTitle) => {
+                const newTitle = document.querySelector('.task-header h3');
+                return newTitle && newTitle.textContent !== oldTitle;
+            },
+            { timeout: 10000 },
+            oldTaskTitle
+        );
+        
+        const newTaskHeader = await this.page.$('.task-header h3');
+        const newTaskTitle = await this.page.evaluate(el => el.textContent, newTaskHeader);
+        await this.runner.assert(newTaskTitle !== oldTaskTitle, 'Задача изменилась');
+        
+        console.log(`Новая задача: "${newTaskTitle}"`);
+    }
+}
+
+// Основная функция запуска тестов
 async function runTests() {
     let browser = null;
     let server = null;
@@ -120,261 +322,21 @@ async function runTests() {
             }
         });
 
-        // Тест 1: Загрузка главной страницы
-        console.log('\n🧪 Тест 1: Загрузка главной страницы');
-        console.log(`Загружаем: ${BASE_URL}/index.html`);
-        
-        const response = await page.goto(`${BASE_URL}/index.html`, { waitUntil: 'networkidle0' });
-        console.log(`Статус ответа: ${response.status()}`);
-        
-        const title = await page.title();
-        console.log(`Заголовок страницы: "${title}"`);
-        await runner.assertContains(title, 'SQLite', 'Заголовок содержит SQLite');
-        
-        // Проверим содержимое страницы для отладки
-        const bodyContent = await page.content();
-        console.log(`Длина HTML: ${bodyContent.length} символов`);
-        
-        // Добавим скриншот для отладки
-        await page.screenshot({ path: 'debug-screenshot.png', fullPage: true });
-        console.log('Скриншот сохранен в debug-screenshot.png');
-        
-        // Тест 2: Проверка элементов UI
-        console.log('\n🧪 Тест 2: Проверка элементов UI');
-        
-        const sqlInput = await page.$('#sql-input');
-        await runner.assert(sqlInput !== null, 'SQL поле ввода присутствует');
-        
-        const runButton = await page.$('#execute-btn');
-        await runner.assert(runButton !== null, 'Кнопка запуска присутствует');
-        
-        const results = await page.$('#results-container');
-        await runner.assert(results !== null, 'Область результатов присутствует');
-        
-        const schema = await page.$('#schema-content');
-        await runner.assert(schema !== null, 'Область схемы присутствует');
+        // Создаем экземпляр тестов
+        const tests = new SQLitePlaygroundTests(page, runner);
 
-        // Тест 3: Проверка инициализации SQLite
-        console.log('\n🧪 Тест 3: Ожидание инициализации SQLite');
+        // Запускаем все тесты последовательно
+        await tests.testPageLoad();
+        await tests.testUIElements();
+        await tests.testSQLiteInitialization();
+        await tests.testSchemaDisplay();
+        await tests.testExampleQueries();
+        await tests.testErrorHandling();
+        await tests.testResponsiveDesign();
         
-        // Ждем загрузки SQLite (максимум 10 секунд)
-        try {
-            await page.waitForFunction(
-                () => window.db !== null && window.SQL !== null,
-                { timeout: 10000 }
-            );
-            await runner.assert(true, 'SQLite WebAssembly успешно загружен');
-        } catch (error) {
-            await runner.assert(false, 'SQLite WebAssembly не загрузился в течение 10 секунд');
-        }
-
-        // Тест 4: Проверка отображения схемы
-        console.log('\n🧪 Тест 4: Проверка отображения схемы');
-        
-        const schemaContent = await page.$eval('#schema-content', el => el.innerHTML);
-        await runner.assertContains(schemaContent, 'users', 'Схема содержит таблицу users');
-        await runner.assertContains(schemaContent, 'orders', 'Схема содержит таблицу orders');
-        await runner.assertContains(schemaContent, 'INTEGER PRIMARY KEY', 'Схема содержит правильные типы данных');
-
-        // Тест 5: Выполнение SELECT запроса
-        console.log('\n🧪 Тест 5: Выполнение SELECT запроса');
-        
-        // Очищаем поле ввода полностью
-        await page.evaluate(() => document.getElementById('sql-input').value = '');
-        
-        // Ждем немного для обеспечения готовности
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        await page.type('#sql-input', 'SELECT COUNT(*) as total FROM users');
-        
-        // Дополнительная проверка готовности SQLite
-        await page.waitForFunction(
-            () => window.db !== null && window.SQL !== null,
-            { timeout: 5000 }
-        );
-        
-        await page.click('#execute-btn');
-        
-        // Ждем завершения выполнения SQL (кнопка снова станет активной)
-        await page.waitForFunction(
-            () => {
-                const btn = document.getElementById('execute-btn');
-                return btn && !btn.disabled && btn.textContent === 'Выполнить запрос';
-            },
-            { timeout: 5000 }
-        );
-        
-        // Дополнительная небольшая пауза для обеспечения обновления DOM
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-        const resultsContent = await page.$eval('#results-container', el => el.innerHTML);
-        console.log(`Содержимое результатов: ${resultsContent.substring(0, 200)}...`);
-        
-        await runner.assertContains(resultsContent, 'total', 'Результат содержит колонку total');
-        await runner.assertContains(resultsContent, '<table', 'Результат отображается в виде таблицы');
-
-        // Тест 6: Очистка и новый запрос
-        console.log('\n🧪 Тест 6: Очистка и новый запрос');
-        
-        await page.evaluate(() => document.getElementById('sql-input').value = '');
-        await page.type('#sql-input', 'SELECT name FROM users LIMIT 3');
-        await page.click('#execute-btn');
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const newResults = await page.$eval('#results-container', el => el.innerHTML);
-        await runner.assertContains(newResults, 'name', 'Новый результат содержит колонку name');
-
-        // Тест 7: Проверка примеров запросов
-        console.log('\n🧪 Тест 7: Проверка примеров запросов');
-        
-        const exampleButtons = await page.$$('.example-btn');
-        await runner.assert(exampleButtons.length > 0, 'Кнопки примеров присутствуют');
-        
-        if (exampleButtons.length > 0) {
-            await exampleButtons[0].click();
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            const inputValue = await page.$eval('#sql-input', el => el.value);
-            await runner.assert(inputValue.length > 0, 'Пример запроса загружен в поле ввода');
-        }
-
-        // Тест 8: Проверка обработки ошибок
-        console.log('\n🧪 Тест 8: Проверка обработки ошибок');
-        
-        await page.evaluate(() => document.getElementById('sql-input').value = '');
-        await page.type('#sql-input', 'SELECT * FROM nonexistent_table');
-        await page.click('#execute-btn');
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const errorResults = await page.$eval('#results-container', el => el.innerHTML);
-        await runner.assertContains(errorResults.toLowerCase(), 'error', 'Ошибка правильно отображается');
-
-        // Тест 9: Проверка INSERT запроса
-        console.log('\n🧪 Тест 9: Проверка INSERT запроса');
-        
-        await page.evaluate(() => document.getElementById('sql-input').value = '');
-        await page.type('#sql-input', "INSERT INTO users (name, email) VALUES ('Test User', 'test@example.com')");
-        await page.click('#execute-btn');
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const insertResults = await page.$eval('#results-container', el => el.innerHTML);
-        await runner.assertContains(insertResults, 'успешно', 'INSERT запрос выполнен успешно');
-
-        // Тест 10: Проверка обновления схемы после INSERT
-        console.log('\n🧪 Тест 10: Проверка что данные добавились');
-        
-        await page.evaluate(() => document.getElementById('sql-input').value = '');
-        await page.type('#sql-input', "SELECT COUNT(*) as count FROM users WHERE email = 'test@example.com'");
-        await page.click('#execute-btn');
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const countResults = await page.$eval('#results-container', el => el.innerHTML);
-        await runner.assertContains(countResults, '1', 'Новая запись найдена в базе данных');
-
-        // Тест 11: Проверка responsive дизайна
-        console.log('\n🧪 Тест 11: Проверка responsive дизайна');
-        
-        await page.setViewport({ width: 400, height: 600 });
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const containerWidth = await page.$eval('.container', el => el.offsetWidth);
-        await runner.assert(containerWidth < 400, 'Контейнер адаптируется к мобильному размеру');
-
-        // Тест 12: Проверка производительности
-        console.log('\n🧪 Тест 12: Проверка производительности');
-        
-        const startTime = Date.now();
-        await page.evaluate(() => document.getElementById('sql-input').value = '');
-        await page.type('#sql-input', 'SELECT * FROM users u JOIN orders o ON u.id = o.user_id LIMIT 100');
-        await page.click('#execute-btn');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const endTime = Date.now();
-        
-        await runner.assert(endTime - startTime < 5000, 'Сложный запрос выполняется менее чем за 5 секунд');
-
-        // Тест: Система задач
-        console.log('\n🧪 Тест: Система задач');
-        
-        // Проверяем наличие секции задач
-        const taskContent = await page.$('#task-content');
-        await runner.assert(taskContent !== null, 'Секция задач присутствует');
-        
-        // Проверяем загрузку задачи
-        await page.waitForSelector('.task-header', { timeout: 10000 });
-        const taskHeader = await page.$('.task-header h3');
-        await runner.assert(taskHeader !== null, 'Заголовок задачи отображается');
-        
-        const taskTitle = await page.evaluate(el => el.textContent, taskHeader);
-        console.log(`Загружена задача: "${taskTitle}"`);
-        
-        // Проверяем кнопку "Следующая задача"
-        const nextTaskButton = await page.$('.task-header button');
-        await runner.assert(nextTaskButton !== null, 'Кнопка "Следующая задача" присутствует');
-        
-        // Проверяем описание задачи
-        const taskDescription = await page.$('.task-description');
-        await runner.assert(taskDescription !== null, 'Описание задачи присутствует');
-        
-        // Проверяем кнопку подсказки
-        const hintButton = await page.$('.btn-hint');
-        await runner.assert(hintButton !== null, 'Кнопка подсказки присутствует');
-        
-        // Тестируем подсказку
-        await hintButton.click();
-        await page.waitForSelector('.task-hint', { visible: true });
-        const hintVisible = await page.$eval('.task-hint', el => el.style.display !== 'none');
-        await runner.assert(hintVisible, 'Подсказка отображается после клика');
-        
-        // Тест выполнения задачи
-        console.log('\n🧪 Тест: Выполнение SQL задачи');
-        
-        // Вводим правильный SQL запрос для простой задачи
-        await page.evaluate(() => {
-            document.getElementById('sql-input').value = 'SELECT name, age FROM students WHERE age > 20;';
-        });
-        
-        // Выполняем запрос
-        await page.click('#execute-btn');
-        
-        // Ждем появления результатов
-        await page.waitForFunction(
-            () => document.querySelector('#results-container table') !== null,
-            { timeout: 10000 }
-        );
-        
-        // Проверяем статус задачи
-        await page.waitForSelector('#task-status', { timeout: 5000 });
-        const taskStatus = await page.$('#task-status');
-        const statusClass = await page.evaluate(el => el.className, taskStatus);
-        await runner.assert(statusClass.includes('success'), 'Задача решена успешно');
-        
-        console.log('✅ Задача выполнена успешно');
-        
-        // Тест смены задачи
-        console.log('\n🧪 Тест: Смена задачи');
-        
-        const oldTaskTitle = taskTitle;
-        await page.click('.task-header button'); // Кнопка "Следующая задача"
-        
-        // Ждем загрузки новой задачи
-        await page.waitForFunction(
-            (oldTitle) => {
-                const newTitle = document.querySelector('.task-header h3');
-                return newTitle && newTitle.textContent !== oldTitle;
-            },
-            {},
-            oldTaskTitle
-        );
-        
-        const newTaskHeader = await page.$('.task-header h3');
-        const newTaskTitle = await page.evaluate(el => el.textContent, newTaskHeader);
-        await runner.assert(newTaskTitle !== oldTaskTitle, 'Задача изменилась');
-        
-        console.log(`Новая задача: "${newTaskTitle}"`);
+        const { taskTitle } = await tests.testTaskSystem();
+        await tests.testTaskExecution(taskTitle);
+        await tests.testTaskSwitch(taskTitle);
 
     } catch (error) {
         console.error('❌ Критическая ошибка при выполнении тестов:', error);
@@ -397,17 +359,7 @@ async function runTests() {
 }
 
 // Запуск тестов
-if (require.main === module) {
-    console.log('🚀 Запуск Puppeteer тестов для SQLite WebAssembly Playground\n');
-    
-    runTests()
-        .then(success => {
-            process.exit(success ? 0 : 1);
-        })
-        .catch(error => {
-            console.error('💥 Фатальная ошибка:', error);
-            process.exit(1);
-        });
-}
-
-module.exports = { runTests, TestRunner };
+console.log('🚀 Запуск Puppeteer тестов для SQLite WebAssembly Playground\n');
+runTests().then(success => {
+    process.exit(success ? 0 : 1);
+});

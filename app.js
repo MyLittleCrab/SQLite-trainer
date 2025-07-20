@@ -61,6 +61,8 @@ async function initSQLite() {
     }
 }
 
+
+
 // Загрузка задач
 async function loadTasks() {
     try {
@@ -113,15 +115,20 @@ function initTaskDatabase() {
     if (!currentTask || !currentTask.initScript) return;
     
     try {
-        // Выполняем скрипт инициализации
+        // Выполняем скрипт инициализации задачи
         for (const query of currentTask.initScript) {
             db.exec(query);
         }
+        
+
+        
         console.log('База данных инициализирована для задачи:', currentTask.title);
     } catch (error) {
         console.error('Ошибка инициализации базы данных для задачи:', error);
     }
 }
+
+
 
 // Отображение текущей задачи
 function displayTask() {
