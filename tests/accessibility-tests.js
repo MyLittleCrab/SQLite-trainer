@@ -1,194 +1,236 @@
-const { BaseTest } = require('./utils/test-config');
+const BaseTestRunner = require('./base-test-runner');
 
-// Класс для тестов доступности (accessibility)
-class AccessibilityTests extends BaseTest {
+// Класс для тестов доступности
+class AccessibilityTests extends BaseTestRunner {
     async testKeyboardNavigation() {
         console.log('\n🧪 Тест: Навигация с клавиатуры');
         
-        // Проверяем что все интерактивные элементы доступны через Tab
-        const focusableElements = await this.page.$$eval(
-            'button, input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            elements => elements.length
-        );
+        // Проверяем фокусируемые элементы
+        const focusableElements = await this.page.$$('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+        console.log(`✅ Найдены фокусируемые элементы: ${focusableElements.length}`);
         
-        await this.runner.assert(
-            focusableElements > 0,
-            `Найдены фокусируемые элементы: ${focusableElements}`
-        );
+        if (focusableElements.length > 0) {
+            this.pass(`Найдены фокусируемые элементы: ${focusableElements.length}`);
+        } else {
+            this.fail(`Найдены фокусируемые элементы: ${focusableElements.length}`);
+        }
         
-        // Тестируем навигацию по основным элементам
+        // Тестируем фокус на SQL поле ввода
         await this.page.focus('#sql-input');
-        const activeElement1 = await this.page.evaluate(() => document.activeElement.id);
-        await this.runner.assert(activeElement1 === 'sql-input', 'SQL поле ввода получило фокус');
+        const sqlInputFocused = await this.page.evaluate(() => {
+            return document.activeElement.id === 'sql-input';
+        });
         
-        // Переходим к следующему элементу через Tab
+        if (sqlInputFocused) {
+            this.pass('SQL поле ввода получило фокус');
+        } else {
+            this.fail('SQL поле ввода получило фокус');
+        }
+        
+        // Тестируем переход к следующему элементу
         await this.page.keyboard.press('Tab');
-        const activeElement2 = await this.page.evaluate(() => document.activeElement.id);
-        await this.runner.assert(
-            activeElement2 !== '',
-            `Фокус перешел к следующему элементу: ${activeElement2}`
-        );
+        const nextFocusedElement = await this.page.evaluate(() => {
+            return document.activeElement.id;
+        });
+        
+        if (nextFocusedElement && nextFocusedElement !== 'sql-input') {
+            this.pass(`Фокус перешел к следующему элементу: ${nextFocusedElement}`);
+        } else {
+            this.fail(`Фокус перешел к следующему элементу: ${nextFocusedElement}`);
+        }
     }
 
-    async testAriaLabels() {
+    async testAriaLabelsAndAttributes() {
         console.log('\n🧪 Тест: ARIA метки и атрибуты');
         
-        // Проверяем наличие aria-label или title на важных элементах
-        const sqlInput = await this.page.$eval('#sql-input', el => ({
-            hasAriaLabel: !!el.getAttribute('aria-label'),
-            hasTitle: !!el.getAttribute('title'),
-            hasPlaceholder: !!el.getAttribute('placeholder')
-        }));
+        // Проверяем SQL поле ввода
+        const sqlInputHasLabel = await this.page.evaluate(() => {
+            const input = document.getElementById('sql-input');
+            return input && (
+                input.getAttribute('aria-label') || 
+                input.getAttribute('placeholder') ||
+                document.querySelector('label[for="sql-input"]')
+            );
+        });
         
-        await this.runner.assert(
-            sqlInput.hasAriaLabel || sqlInput.hasTitle || sqlInput.hasPlaceholder,
-            'SQL поле ввода имеет описательный текст для скринридеров'
-        );
+        if (sqlInputHasLabel) {
+            this.pass('SQL поле ввода имеет описательный текст для скринридеров');
+        } else {
+            this.fail('SQL поле ввода имеет описательный текст для скринридеров');
+        }
         
         // Проверяем кнопки
-        const buttons = await this.page.$$eval('button', elements => 
-            elements.map(btn => ({
-                hasText: btn.textContent.trim().length > 0,
-                hasAriaLabel: !!btn.getAttribute('aria-label'),
-                hasTitle: !!btn.getAttribute('title')
-            }))
-        );
+        const buttonsWithLabels = await this.page.evaluate(() => {
+            const buttons = document.querySelectorAll('button');
+            let count = 0;
+            buttons.forEach(button => {
+                if (button.textContent.trim() || button.getAttribute('aria-label') || button.getAttribute('title')) {
+                    count++;
+                }
+            });
+            return { total: buttons.length, withLabels: count };
+        });
         
-        const accessibleButtons = buttons.filter(btn => 
-            btn.hasText || btn.hasAriaLabel || btn.hasTitle
-        );
-        
-        await this.runner.assert(
-            accessibleButtons.length === buttons.length,
-            `Все кнопки имеют описательный текст (${accessibleButtons.length}/${buttons.length})`
-        );
+        if (buttonsWithLabels.withLabels === buttonsWithLabels.total && buttonsWithLabels.total > 0) {
+            this.pass(`Все кнопки имеют описательный текст (${buttonsWithLabels.withLabels}/${buttonsWithLabels.total})`);
+        } else {
+            this.fail(`Все кнопки имеют описательный текст (${buttonsWithLabels.withLabels}/${buttonsWithLabels.total})`);
+        }
     }
 
     async testColorContrast() {
         console.log('\n🧪 Тест: Контрастность цветов');
         
-        // Проверяем основные цвета текста и фона
-        const contrastInfo = await this.page.evaluate(() => {
+        // Получаем цвета основных элементов
+        const colors = await this.page.evaluate(() => {
             const body = document.body;
             const computedStyle = window.getComputedStyle(body);
-            
             return {
                 backgroundColor: computedStyle.backgroundColor,
-                color: computedStyle.color,
-                hasGoodContrast: true // Упрощенная проверка
+                color: computedStyle.color
             };
         });
         
-        console.log(`🎨 Цвет фона: ${contrastInfo.backgroundColor}`);
-        console.log(`🎨 Цвет текста: ${contrastInfo.color}`);
+        console.log(`🎨 Цвет фона: ${colors.backgroundColor}`);
+        console.log(`🎨 Цвет текста: ${colors.color}`);
         
-        await this.runner.assert(
-            contrastInfo.hasGoodContrast,
-            'Контрастность цветов достаточная для читаемости'
-        );
+        // Простая проверка контрастности (базовая)
+        const hasGoodContrast = colors.backgroundColor !== colors.color;
+        
+        if (hasGoodContrast) {
+            this.pass('Контрастность цветов достаточная для читаемости');
+        } else {
+            this.fail('Контрастность цветов достаточная для читаемости');
+        }
     }
 
     async testScreenReaderCompatibility() {
         console.log('\n🧪 Тест: Совместимость со скринридерами');
         
-        // Проверяем структуру заголовков
-        const headings = await this.page.$$eval('h1, h2, h3, h4, h5, h6', elements =>
-            elements.map(h => ({
-                tagName: h.tagName,
-                text: h.textContent.trim(),
-                hasText: h.textContent.trim().length > 0
-            }))
-        );
+        // Проверяем заголовки
+        const headings = await this.page.$$('h1, h2, h3, h4, h5, h6');
         
-        await this.runner.assert(
-            headings.length > 0,
-            `Найдены заголовки для структурирования содержимого: ${headings.length}`
-        );
-        
-        const validHeadings = headings.filter(h => h.hasText);
-        await this.runner.assert(
-            validHeadings.length === headings.length,
-            `Все заголовки содержат текст (${validHeadings.length}/${headings.length})`
-        );
-        
-        // Проверяем alt-атрибуты у изображений
-        const images = await this.page.$$eval('img', elements =>
-            elements.map(img => ({
-                hasAlt: img.hasAttribute('alt'),
-                altText: img.getAttribute('alt') || ''
-            }))
-        );
-        
-        if (images.length > 0) {
-            const accessibleImages = images.filter(img => img.hasAlt);
-            await this.runner.assert(
-                accessibleImages.length === images.length,
-                `Все изображения имеют alt-атрибуты (${accessibleImages.length}/${images.length})`
-            );
+        if (headings.length > 0) {
+            this.pass(`Найдены заголовки для структурирования содержимого: ${headings.length}`);
         } else {
+            this.fail(`Найдены заголовки для структурирования содержимого: ${headings.length}`);
+        }
+        
+        // Проверяем, что заголовки содержат текст
+        const headingsWithText = await this.page.evaluate(() => {
+            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            let count = 0;
+            headings.forEach(heading => {
+                if (heading.textContent.trim()) {
+                    count++;
+                }
+            });
+            return { total: headings.length, withText: count };
+        });
+        
+        if (headingsWithText.withText === headingsWithText.total && headingsWithText.total > 0) {
+            this.pass(`Все заголовки содержат текст (${headingsWithText.withText}/${headingsWithText.total})`);
+        } else {
+            this.fail(`Все заголовки содержат текст (${headingsWithText.withText}/${headingsWithText.total})`);
+        }
+        
+        // Проверяем изображения
+        const images = await this.page.$$('img');
+        if (images.length === 0) {
             console.log('ℹ️ Изображения не найдены');
+        } else {
+            const imagesWithAlt = await this.page.evaluate(() => {
+                const images = document.querySelectorAll('img');
+                let count = 0;
+                images.forEach(img => {
+                    if (img.getAttribute('alt') !== null) {
+                        count++;
+                    }
+                });
+                return { total: images.length, withAlt: count };
+            });
+            
+            if (imagesWithAlt.withAlt === imagesWithAlt.total) {
+                this.pass(`Все изображения имеют alt атрибуты (${imagesWithAlt.withAlt}/${imagesWithAlt.total})`);
+            } else {
+                this.fail(`Все изображения имеют alt атрибуты (${imagesWithAlt.withAlt}/${imagesWithAlt.total})`);
+            }
         }
     }
 
     async testFormAccessibility() {
         console.log('\n🧪 Тест: Доступность форм');
         
-        // Проверяем связь label с input элементами
-        const formElements = await this.page.evaluate(() => {
+        // Проверяем поля формы с подписями
+        const formFieldsWithLabels = await this.page.evaluate(() => {
             const inputs = document.querySelectorAll('input, select, textarea');
-            return Array.from(inputs).map(input => {
+            let count = 0;
+            inputs.forEach(input => {
                 const id = input.id;
-                const associatedLabel = id ? document.querySelector(`label[for="${id}"]`) : null;
-                const parentLabel = input.closest('label');
-                
-                return {
-                    id: id,
-                    type: input.type || input.tagName.toLowerCase(),
-                    hasLabel: !!(associatedLabel || parentLabel),
-                    hasAriaLabel: !!input.getAttribute('aria-label'),
-                    hasPlaceholder: !!input.getAttribute('placeholder')
-                };
+                if (id && document.querySelector(`label[for="${id}"]`)) {
+                    count++;
+                } else if (input.getAttribute('aria-label') || input.getAttribute('placeholder')) {
+                    count++;
+                }
             });
+            return { total: inputs.length, withLabels: count };
         });
         
-        if (formElements.length > 0) {
-            const accessibleInputs = formElements.filter(input => 
-                input.hasLabel || input.hasAriaLabel || input.hasPlaceholder
-            );
-            
-            await this.runner.assert(
-                accessibleInputs.length === formElements.length,
-                `Все поля формы имеют подписи (${accessibleInputs.length}/${formElements.length})`
-            );
+        if (formFieldsWithLabels.withLabels === formFieldsWithLabels.total && formFieldsWithLabels.total > 0) {
+            this.pass(`Все поля формы имеют подписи (${formFieldsWithLabels.withLabels}/${formFieldsWithLabels.total})`);
         } else {
-            console.log('ℹ️ Поля формы не найдены');
+            this.fail(`Все поля формы имеют подписи (${formFieldsWithLabels.withLabels}/${formFieldsWithLabels.total})`);
         }
     }
 
     async testFocusManagement() {
         console.log('\n🧪 Тест: Управление фокусом');
         
-        // Проверяем что фокус виден
-        const focusVisible = await this.page.evaluate(() => {
-            const style = document.createElement('style');
-            style.textContent = `
-                :focus { outline: 2px solid blue !important; }
-            `;
-            document.head.appendChild(style);
-            return true;
+        // Проверяем видимость фокуса
+        await this.page.addStyleTag({
+            content: `
+                *:focus {
+                    outline: 2px solid #007acc !important;
+                    outline-offset: 2px !important;
+                }
+            `
         });
         
-        await this.runner.assert(focusVisible, 'Добавлены стили для видимости фокуса');
+        this.pass('Добавлены стили для видимости фокуса');
         
-        // Тестируем что фокус не теряется при взаимодействии
+        // Тестируем сохранение фокуса при вводе
         await this.page.focus('#sql-input');
-        await this.page.keyboard.type('SELECT 1');
+        await this.page.type('#sql-input', 'SELECT * FROM test;');
         
-        const stillFocused = await this.page.evaluate(() => 
-            document.activeElement.id === 'sql-input'
-        );
+        const focusPreserved = await this.page.evaluate(() => {
+            return document.activeElement.id === 'sql-input';
+        });
         
-        await this.runner.assert(stillFocused, 'Фокус сохраняется при вводе текста');
+        if (focusPreserved) {
+            this.pass('Фокус сохраняется при вводе текста');
+        } else {
+            this.fail('Фокус сохраняется при вводе текста');
+        }
+    }
+
+    // Метод для запуска всех тестов доступности
+    async runAllTests() {
+        console.log('\n♿ === ТЕСТЫ ДОСТУПНОСТИ === ♿\n');
+        
+        try {
+            await this.testKeyboardNavigation();
+            await this.testAriaLabelsAndAttributes();
+            await this.testColorContrast();
+            await this.testScreenReaderCompatibility();
+            await this.testFormAccessibility();
+            await this.testFocusManagement();
+            
+            return this.summary();
+        } catch (error) {
+            console.error('❌ Критическая ошибка при выполнении тестов доступности:', error);
+            this.fail(`Критическая ошибка: ${error.message}`);
+            return false;
+        }
     }
 }
 

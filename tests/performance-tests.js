@@ -1,25 +1,21 @@
-const { BaseTest } = require('./utils/test-config');
+const BaseTestRunner = require('./base-test-runner');
 
 // Класс для тестов производительности
-class PerformanceTests extends BaseTest {
+class PerformanceTests extends BaseTestRunner {
     async testPageLoadSpeed() {
         console.log('\n🧪 Тест: Скорость загрузки страницы');
         
         const startTime = Date.now();
-        
-        // Измеряем время загрузки страницы
-        await this.page.goto(`http://localhost:8000/index.html`, { 
-            waitUntil: 'networkidle0' 
-        });
-        
+        await this.page.goto('http://localhost:8000/index.html', { waitUntil: 'networkidle0' });
         const loadTime = Date.now() - startTime;
+        
         console.log(`⏱️ Время загрузки: ${loadTime}мс`);
         
-        // Проверяем что страница загружается быстро (менее 5 секунд)
-        await this.runner.assert(
-            loadTime < 5000, 
-            `Страница загружается быстро (${loadTime}мс < 5000мс)`
-        );
+        if (loadTime < 5000) {
+            this.pass(`Страница загружается быстро (${loadTime}мс < 5000мс)`);
+        } else {
+            this.fail(`Страница загружается быстро (${loadTime}мс < 5000мс)`);
+        }
     }
 
     async testSQLiteInitSpeed() {
@@ -27,114 +23,107 @@ class PerformanceTests extends BaseTest {
         
         const startTime = Date.now();
         
-        // Ждем инициализации SQLite
         try {
-            await this.page.waitForFunction(
-                () => window.db !== null && window.SQL !== null,
-                { timeout: 10000 }
-            );
+            await this.page.waitForFunction(() => {
+                return window.db && typeof window.db.exec === 'function';
+            }, { timeout: 8000 });
             
             const initTime = Date.now() - startTime;
             console.log(`⏱️ Время инициализации SQLite: ${initTime}мс`);
             
-            // Проверяем что SQLite инициализируется быстро (менее 8 секунд)
-            await this.runner.assert(
-                initTime < 8000, 
-                `SQLite инициализируется быстро (${initTime}мс < 8000мс)`
-            );
-            
+            if (initTime < 8000) {
+                this.pass(`SQLite инициализируется быстро (${initTime}мс < 8000мс)`);
+            } else {
+                this.fail(`SQLite инициализируется быстро (${initTime}мс < 8000мс)`);
+            }
         } catch (error) {
-            await this.runner.assert(false, 'SQLite не инициализировался в течение 10 секунд');
+            console.log('⏱️ Время инициализации SQLite: >8000мс (timeout)');
+            this.fail('SQLite инициализируется быстро (>8000мс < 8000мс)');
         }
     }
 
     async testQueryExecutionSpeed() {
         console.log('\n🧪 Тест: Скорость выполнения SQL запросов');
         
-        // Выполняем простой запрос и измеряем время
-        const startTime = Date.now();
-        
+        // Вводим простой запрос
         await this.page.evaluate(() => {
-            document.getElementById('sql-input').value = 'SELECT COUNT(*) FROM students';
+            document.getElementById('sql-input').value = 'SELECT * FROM students LIMIT 5;';
         });
         
+        const startTime = Date.now();
         await this.page.click('#execute-test-btn');
         
         // Ждем появления результатов
-        await this.page.waitForFunction(
-            () => {
-                const results = document.getElementById('results-container').innerHTML;
-                return results.includes('Query executed successfully') || 
-                       results.includes('Запрос выполнен успешно');
-            },
-            { timeout: 5000 }
-        );
+        await this.page.waitForFunction(() => {
+            const results = document.getElementById('results-container');
+            return results && results.innerHTML.includes('students');
+        }, { timeout: 2000 });
         
         const executionTime = Date.now() - startTime;
         console.log(`⏱️ Время выполнения запроса: ${executionTime}мс`);
         
-        // Проверяем что запрос выполняется быстро (менее 2 секунд)
-        await this.runner.assert(
-            executionTime < 2000, 
-            `SQL запрос выполняется быстро (${executionTime}мс < 2000мс)`
-        );
+        if (executionTime < 2000) {
+            this.pass(`SQL запрос выполняется быстро (${executionTime}мс < 2000мс)`);
+        } else {
+            this.fail(`SQL запрос выполняется быстро (${executionTime}мс < 2000мс)`);
+        }
     }
 
     async testMemoryUsage() {
         console.log('\n🧪 Тест: Использование памяти');
         
-        // Получаем информацию о памяти в браузере
-        const memoryInfo = await this.page.evaluate(() => {
-            if (performance.memory) {
-                return {
-                    usedJSHeapSize: performance.memory.usedJSHeapSize,
-                    totalJSHeapSize: performance.memory.totalJSHeapSize,
-                    jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-                };
-            }
-            return null;
-        });
+        const memoryMetrics = await this.page.metrics();
+        const memoryUsedMB = Math.round(memoryMetrics.JSHeapUsedSize / 1024 / 1024);
         
-        if (memoryInfo) {
-            const usedMB = Math.round(memoryInfo.usedJSHeapSize / 1024 / 1024);
-            console.log(`💾 Используется памяти: ${usedMB}MB`);
-            
-            // Проверяем что приложение использует разумное количество памяти (менее 100MB)
-            await this.runner.assert(
-                usedMB < 100, 
-                `Приложение использует разумное количество памяти (${usedMB}MB < 100MB)`
-            );
+        console.log(`💾 Используется памяти: ${memoryUsedMB}MB`);
+        
+        if (memoryUsedMB < 100) {
+            this.pass(`Приложение использует разумное количество памяти (${memoryUsedMB}MB < 100MB)`);
         } else {
-            console.log('ℹ️ Информация о памяти недоступна в этом браузере');
-            await this.runner.assert(true, 'Тест памяти пропущен (API недоступно)');
+            this.fail(`Приложение использует разумное количество памяти (${memoryUsedMB}MB < 100MB)`);
         }
     }
 
     async testResponseTimes() {
         console.log('\n🧪 Тест: Время отклика интерфейса');
         
-        // Тестируем время отклика на клик по кнопке
+        // Тестируем время отклика кнопки
         const startTime = Date.now();
-        
         await this.page.click('#execute-test-btn');
         
-        // Ждем любого изменения в контейнере результатов
-        await this.page.waitForFunction(
-            () => {
-                const results = document.getElementById('results-container').innerHTML;
-                return results.trim().length > 0;
-            },
-            { timeout: 3000 }
-        );
+        // Ждем любой ответ от интерфейса
+        await this.page.waitForFunction(() => {
+            const results = document.getElementById('results-container');
+            return results && results.innerHTML !== '';
+        }, { timeout: 1000 });
         
         const responseTime = Date.now() - startTime;
         console.log(`⚡ Время отклика интерфейса: ${responseTime}мс`);
         
-        // Проверяем что интерфейс отзывчивый (менее 1 секунды)
-        await this.runner.assert(
-            responseTime < 1000, 
-            `Интерфейс отзывчивый (${responseTime}мс < 1000мс)`
-        );
+        if (responseTime < 1000) {
+            this.pass(`Интерфейс отзывчивый (${responseTime}мс < 1000мс)`);
+        } else {
+            this.fail(`Интерфейс отзывчивый (${responseTime}мс < 1000мс)`);
+        }
+    }
+
+    // Метод для запуска всех тестов производительности
+    async runAllTests() {
+        console.log('\n⚡ === ТЕСТЫ ПРОИЗВОДИТЕЛЬНОСТИ === ⚡\n');
+        
+        try {
+            await this.testPageLoadSpeed();
+            await this.testSQLiteInitSpeed();
+            await this.testQueryExecutionSpeed();
+            await this.testMemoryUsage();
+            await this.testResponseTimes();
+            
+            return this.summary();
+        } catch (error) {
+            console.error('❌ Критическая ошибка при выполнении тестов производительности:', error);
+            this.fail(`Критическая ошибка: ${error.message}`);
+            return false;
+        }
     }
 }
 

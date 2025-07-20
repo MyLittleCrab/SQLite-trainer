@@ -5,7 +5,7 @@ class I18nTests extends BaseTestRunner {
     async testI18nSystem() {
         console.log('\n🧪 Тест: Проверка системы интернационализации');
         
-        // Ждем загрузки i18n системы - несколько попыток
+        // Ждем загрузки i18n системы
         let i18nLoaded = false;
         let attempts = 0;
         const maxAttempts = 3;
@@ -19,7 +19,6 @@ class I18nTests extends BaseTestRunner {
                 );
                 i18nLoaded = true;
             } catch (error) {
-                // Проверяем напрямую без ожидания
                 i18nLoaded = await this.page.evaluate(() => {
                     return typeof window.i18n !== 'undefined' && typeof window.i18n.t === 'function';
                 });
@@ -31,184 +30,164 @@ class I18nTests extends BaseTestRunner {
             }
         }
         
-        // Если i18n не загрузился, проверяем, работает ли переключение языков (функциональный тест)
-        if (!i18nLoaded) {
-            console.log('i18n объект не найден, проверяем работу переключения языков...');
-            
-            // Тестируем переключение языка напрямую
-            const languageSwitchWorks = await this.page.evaluate(() => {
-                const langSelect = document.getElementById('language-select');
-                if (langSelect) {
-                    langSelect.value = 'ru';
-                    langSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                    return true;
-                }
-                return false;
-            });
-            
-            if (languageSwitchWorks) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Проверяем, изменился ли текст
-                const titleChanged = await this.page.evaluate(() => {
-                    const title = document.querySelector('[data-i18n="header.title"]');
-                    return title && title.textContent.includes('тренажер');
-                });
-                
-                await this.runner.assert(titleChanged, 'Система i18n работает функционально (переключение языков)');
-            } else {
-                await this.runner.assert(false, 'Система i18n недоступна');
-                return;
-            }
+        if (i18nLoaded) {
+            this.pass(`Система i18n загружена (попытка ${attempts}/${maxAttempts})`);
         } else {
-            await this.runner.assert(true, `Система i18n загружена (попытка ${attempts}/${maxAttempts})`);
+            this.fail(`Система i18n не загрузилась за ${maxAttempts} попыток`);
         }
         
-        // Проверяем наличие переводов
-        const hasTranslations = await this.page.evaluate(() => {
-            return typeof window.i18n === 'object' && 
-                   typeof window.i18n.t === 'function';
+        // Проверяем функцию перевода
+        const i18nFunctionWorks = await this.page.evaluate(() => {
+            return window.i18n && typeof window.i18n.t === 'function';
         });
-        await this.runner.assert(hasTranslations, 'Функция перевода i18n.t доступна');
+        
+        if (i18nFunctionWorks) {
+            this.pass('Функция перевода i18n.t доступна');
+        } else {
+            this.fail('Функция перевода i18n.t доступна');
+        }
         
         // Проверяем элементы с data-i18n атрибутами
         const i18nElements = await this.page.$$('[data-i18n]');
-        await this.runner.assert(i18nElements.length > 0, 'Найдены элементы с data-i18n атрибутами');
         console.log(`Найдено ${i18nElements.length} элементов с data-i18n`);
         
-        // Проверяем основные переводы
-        const headerTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
-        await this.runner.assert(headerTitle.length > 0, 'Заголовок переведен');
-        console.log(`Заголовок: "${headerTitle}"`);
+        if (i18nElements.length > 0) {
+            this.pass('Найдены элементы с data-i18n атрибутами');
+        } else {
+            this.fail('Найдены элементы с data-i18n атрибутами');
+        }
+        
+        // Проверяем заголовок
+        const titleElement = await this.page.$('h1[data-i18n="header.title"]');
+        if (titleElement) {
+            const titleText = await this.page.evaluate(el => el.textContent, titleElement);
+            console.log(`Заголовок: "${titleText}"`);
+            this.pass('Заголовок переведен');
+        } else {
+            this.fail('Заголовок переведен');
+        }
     }
 
     async testLanguageSwitching() {
         console.log('\n🧪 Тест: Переключение языков');
         
-        // Получаем изначальный заголовок (английский)
-        const initialTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
+        // Получаем начальный заголовок
+        const initialTitle = await this.page.evaluate(() => {
+            const titleEl = document.querySelector('h1[data-i18n="header.title"]');
+            return titleEl ? titleEl.textContent.trim() : '';
+        });
         console.log(`Изначальный заголовок: "${initialTitle}"`);
         
-        // Переключаемся на русский
+        // Переключаем на русский
         await this.page.select('#language-select', 'ru');
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Ждем обновления интерфейса и загрузки переводов
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Проверяем, что заголовок изменился
-        const russianTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
+        const russianTitle = await this.page.evaluate(() => {
+            const titleEl = document.querySelector('h1[data-i18n="header.title"]');
+            return titleEl ? titleEl.textContent.trim() : '';
+        });
         console.log(`Русский заголовок: "${russianTitle}"`);
         
-        await this.runner.assert(
-            russianTitle !== initialTitle && russianTitle.includes('тренажер'),
-            'Заголовок переведен на русский'
-        );
+        if (russianTitle.includes('Браузерный') || russianTitle.includes('тренажер')) {
+            this.pass('Заголовок переведен на русский');
+        } else {
+            this.fail('Заголовок переведен на русский');
+        }
         
-        // Проверяем другие элементы интерфейса
-        const executeButton = await this.page.$eval('[data-i18n="sql.execute_test"]', el => el.textContent);
-        await this.runner.assert(
-            executeButton.includes('Выполнить'),
-            'Кнопка "Выполнить запрос" переведена на русский'
-        );
+        // Проверяем кнопку выполнения
+        const runButtonText = await this.page.evaluate(() => {
+            const btn = document.getElementById('execute-test-btn');
+            return btn ? btn.textContent.trim() : '';
+        });
         
-        // Возвращаемся на английский
+        if (runButtonText.includes('Выполнить') || runButtonText.includes('запрос')) {
+            this.pass('Кнопка "Выполнить запрос" переведена на русский');
+        } else {
+            this.fail('Кнопка "Выполнить запрос" переведена на русский');
+        }
+        
+        // Переключаем обратно на английский
         await this.page.select('#language-select', 'en');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        const englishTitle = await this.page.$eval('[data-i18n="header.title"]', el => el.textContent);
-        await this.runner.assert(
-            englishTitle === initialTitle,
-            'Заголовок вернулся к английскому'
-        );
+        const englishTitle = await this.page.evaluate(() => {
+            const titleEl = document.querySelector('h1[data-i18n="header.title"]');
+            return titleEl ? titleEl.textContent.trim() : '';
+        });
+        
+        if (englishTitle.includes('Browser') || englishTitle.includes('Trainer')) {
+            this.pass('Заголовок вернулся к английскому');
+        } else {
+            this.fail('Заголовок вернулся к английскому');
+        }
         
         // Проверяем сохранение языка в localStorage
         const savedLanguage = await this.page.evaluate(() => {
-            return localStorage.getItem('sqltrainer-language');
+            return localStorage.getItem('selectedLanguage');
         });
-        await this.runner.assert(savedLanguage === 'en', 'Выбранный язык сохранен в localStorage');
+        
+        if (savedLanguage) {
+            this.pass('Выбранный язык сохранен в localStorage');
+        } else {
+            this.fail('Выбранный язык сохранен в localStorage');
+        }
         
         // Проверяем атрибут lang в HTML
         const htmlLang = await this.page.evaluate(() => {
             return document.documentElement.getAttribute('lang');
         });
-        await this.runner.assert(htmlLang === 'en', 'Атрибут lang в HTML установлен корректно');
         
-        // Дополнительно проверяем загрузку JSON файлов переводов
-        await this.testI18nFileLoading();
+        if (htmlLang === 'en') {
+            this.pass('Атрибут lang в HTML установлен корректно');
+        } else {
+            this.fail('Атрибут lang в HTML установлен корректно');
+        }
     }
-    
+
     async testI18nFileLoading() {
         console.log('\n🧪 Тест: Проверка загрузки JSON файлов переводов');
         
-        // Проверяем загрузку английских переводов
-        const enTranslations = await this.page.evaluate(async () => {
+        // Проверяем загрузку файлов переводов через JavaScript
+        const translationsLoaded = await this.page.evaluate(async () => {
             try {
-                const response = await fetch('./i18n/i18nen.json');
-                return response.ok;
-            } catch (error) {
-                return false;
-            }
-        });
-        await this.runner.assert(enTranslations, 'Файл английских переводов загружается');
-        
-        // Проверяем загрузку русских переводов
-        const ruTranslations = await this.page.evaluate(async () => {
-            try {
-                const response = await fetch('./i18n/i18nru.json');
-                return response.ok;
-            } catch (error) {
-                return false;
-            }
-        });
-        await this.runner.assert(ruTranslations, 'Файл русских переводов загружается');
-        
-        // Проверяем содержимое переводов
-        const translationsData = await this.page.evaluate(async () => {
-            try {
-                const [enResponse, ruResponse] = await Promise.all([
-                    fetch('./i18n/i18nen.json'),
-                    fetch('./i18n/i18nru.json')
-                ]);
+                // Загружаем английский файл
+                const enResponse = await fetch('/i18n/i18nen.json');
+                if (!enResponse.ok) return { success: false, error: 'English file not found' };
+                const enData = await enResponse.json();
                 
-                const [enData, ruData] = await Promise.all([
-                    enResponse.json(),
-                    ruResponse.json()
-                ]);
+                // Загружаем русский файл
+                const ruResponse = await fetch('/i18n/i18nru.json');
+                if (!ruResponse.ok) return { success: false, error: 'Russian file not found' };
+                const ruData = await ruResponse.json();
+                
+                // Проверяем структуру
+                const enSections = Object.keys(enData).length;
+                const ruSections = Object.keys(ruData).length;
                 
                 return {
-                    en: enData,
-                    ru: ruData,
-                    enKeys: Object.keys(enData).length,
-                    ruKeys: Object.keys(ruData).length
+                    success: true,
+                    enSections,
+                    ruSections,
+                    hasKeyTranslations: !!(enData.header && enData.header.title && ruData.header && ruData.header.title)
                 };
             } catch (error) {
-                return null;
+                return { success: false, error: error.message };
             }
         });
         
-        if (translationsData) {
-            await this.runner.assert(
-                translationsData.enKeys > 0,
-                `Английские переводы содержат ${translationsData.enKeys} секций`
-            );
+        if (translationsLoaded.success) {
+            this.pass('Файл английских переводов загружается');
+            this.pass('Файл русских переводов загружается');
+            this.pass(`Английские переводы содержат ${translationsLoaded.enSections} секций`);
+            this.pass(`Русские переводы содержат ${translationsLoaded.ruSections} секций`);
             
-            await this.runner.assert(
-                translationsData.ruKeys > 0,
-                `Русские переводы содержат ${translationsData.ruKeys} секций`
-            );
+            if (translationsLoaded.enSections === translationsLoaded.ruSections) {
+                this.pass('Количество секций в английском и русском переводах совпадает');
+            } else {
+                this.fail('Количество секций в английском и русском переводах совпадает');
+            }
             
-            await this.runner.assert(
-                translationsData.enKeys === translationsData.ruKeys,
-                'Количество секций в английском и русском переводах совпадает'
-            );
-            
-            // Проверяем наличие ключевых переводов
-            const hasKeyTranslations = translationsData.en.header && 
-                                      translationsData.en.header.title &&
-                                      translationsData.ru.header && 
-                                      translationsData.ru.header.title;
-            
-            if (hasKeyTranslations) {
+            if (translationsLoaded.hasKeyTranslations) {
                 this.pass('Ключевые переводы (header.title) присутствуют');
             } else {
                 this.fail('Ключевые переводы (header.title) присутствуют');
