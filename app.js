@@ -520,11 +520,11 @@ function checkSolutionSQL() {
             // Проверяем результат задачи / Check task result
             const isCorrect = checkTaskResult(results);
             
-                         if (isCorrect) {
-                 let tableHTML = '<div class="success">' + i18n.t('task.correct') + '</div>';
-                 if (results.length > 0) {
-                     tableHTML += '<h4>' + i18n.t('task.your_result') + '</h4>';
-                     tableHTML += '<table><thead><tr>';
+            if (isCorrect) {
+                let tableHTML = '<div class="success">' + i18n.t('task.correct') + '</div>';
+                if (results.length > 0) {
+                    tableHTML += '<h4>' + i18n.t('task.your_result') + '</h4>';
+                    tableHTML += '<table><thead><tr>';
                     
                     // Заголовки столбцов / Column headers
                     columns.forEach(col => {
@@ -547,10 +547,12 @@ function checkSolutionSQL() {
                     tableHTML += '</tbody></table>';
                 }
                 showTaskResultModal(tableHTML);
+            } else {
+                showTaskResultModal('<div class="error">' + i18n.t('task.incorrect') + '</div>');
             }
-                 } else {
-             showTaskResultModal('<div class="error">' + i18n.t('error.use_select_query') + '</div>');
-         }
+        } else {
+            showTaskResultModal('<div class="error">' + i18n.t('error.use_select_query') + '</div>');
+        }
         
     } catch (error) {
         console.error('Ошибка выполнения SQL:', error);
@@ -629,6 +631,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 });
+
+// Экспорт функций в глобальную область / Export functions to global scope
+window.executeTestSQL = executeTestSQL;
+window.checkSolutionSQL = checkSolutionSQL;
+window.setExample = setExample;
 
 // Запуск инициализации при загрузке страницы / Start initialization on page load
 window.addEventListener('load', initSQLite);
