@@ -1,54 +1,24 @@
 const puppeteer = require('puppeteer');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
 
 // Конфигурация
-const PORT = 8080;
+const PORT = 8000;
 const BASE_URL = `http://localhost:${PORT}`;
 
-// Простой HTTP сервер
-function startServer() {
-    return new Promise((resolve) => {
-        const server = http.createServer((request, response) => {
-            const rootDir = path.join(__dirname, '..');
-            let filePath = path.join(rootDir, request.url === '/' ? '/index.html' : request.url);
-            
-            // Проверяем существование файла
-            if (!fs.existsSync(filePath)) {
-                response.writeHead(404);
-                response.end('File not found');
-                return;
+// Функция ожидания готовности сервера
+async function waitForServer(maxAttempts = 30) {
+    for (let i = 0; i < maxAttempts; i++) {
+        try {
+            const response = await fetch(BASE_URL);
+            if (response.ok) {
+                console.log(`🌍 Сервер готов на ${BASE_URL}`);
+                return true;
             }
-            
-            // Определяем Content-Type
-            const ext = path.extname(filePath);
-            const contentTypes = {
-                '.html': 'text/html',
-                '.js': 'application/javascript',
-                '.css': 'text/css',
-                '.wasm': 'application/wasm'
-            };
-            
-            const contentType = contentTypes[ext] || 'text/plain';
-            
-            fs.readFile(filePath, (err, data) => {
-                if (err) {
-                    response.writeHead(500);
-                    response.end('Server error');
-                    return;
-                }
-                
-                response.writeHead(200, { 'Content-Type': contentType });
-                response.end(data);
-            });
-        });
-        
-        server.listen(PORT, () => {
-            console.log(`🚀 HTTP сервер запущен на ${BASE_URL}`);
-            resolve(server);
-        });
-    });
+        } catch (error) {
+            // Сервер еще не готов, ждем
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    throw new Error('Сервер не отвечает после 30 секунд ожидания');
 }
 
 // Утилиты для тестирования
@@ -293,12 +263,11 @@ class SQLitePlaygroundTests {
 // Основная функция запуска тестов
 async function runTests() {
     let browser = null;
-    let server = null;
     const runner = new TestRunner();
 
     try {
-        // Запускаем сервер
-        server = await startServer();
+        // Ждем готовности сервера
+        await waitForServer();
         
         // Запускаем браузер
         console.log('🌐 Запуск Chromium...');
@@ -346,12 +315,6 @@ async function runTests() {
         if (browser) {
             await browser.close();
             console.log('🔒 Браузер закрыт');
-        }
-        
-        // Закрываем сервер
-        if (server) {
-            server.close();
-            console.log('🛑 HTTP сервер остановлен');
         }
     }
 

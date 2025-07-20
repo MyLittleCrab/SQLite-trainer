@@ -7,7 +7,9 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node tests/puppeteer-tests.js"
+    "start": "npx http-server -p 8000",
+    "test": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:run\"",
+    "test:run": "node tests/puppeteer-tests.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,8 @@
   },
   "homepage": "https://github.com/MyLittleCrab/SQLite-trainer#readme",
   "devDependencies": {
+    "concurrently": "^8.2.2",
+    "http-server": "^14.1.1",
     "puppeteer": "^24.14.0",
     "serve-handler": "^6.1.6"
   }
