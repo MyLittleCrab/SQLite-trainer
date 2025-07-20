@@ -66,7 +66,7 @@ async function initSQLite() {
 // Загрузка задач / Loading tasks
 async function loadTasks() {
     try {
-        const response = await fetch('sql-tasks/index.json');
+        const response = await fetch('./sql-tasks/index.json');
         allTasks = await response.json();
         console.log('Загружено задач:', allTasks.length);
         
@@ -91,7 +91,7 @@ async function loadRandomTask() {
     const taskRef = allTasks[randomIndex];
     
     try {
-        const response = await fetch(`sql-tasks/${taskRef.file}`);
+        const response = await fetch(`./sql-tasks/${taskRef.file}`);
         currentTask = await response.json();
         
         // Инициализируем базу данных для задачи / Initialize database for task
