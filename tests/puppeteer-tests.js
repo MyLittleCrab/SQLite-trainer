@@ -406,6 +406,127 @@ class SQLitePlaygroundTests {
         return { taskTitle, taskHeader };
     }
 
+    async testTaskTextFieldsLocalization() {
+        console.log('\n🧪 Тест: Проверка локализации всех текстовых полей задач');
+
+        // Тестируем на русском языке
+        await this.page.select('#language-select', 'ru');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Проверяем несколько задач подряд
+        for (let attempt = 0; attempt < 3; attempt++) {
+            console.log(`\n📝 Проверка задачи ${attempt + 1}:`);
+            
+            // Ждем загрузки задачи
+            await this.page.waitForSelector('.task-header h3', { timeout: 5000 });
+            
+            // 1. Проверяем заголовок задачи
+            const taskTitle = await this.page.$eval('.task-header h3', el => el.textContent);
+            console.log(`  ✓ Заголовок: "${taskTitle}"`);
+            
+            // Проверяем что заголовок не содержит [object Object]
+            await this.runner.assert(
+                !taskTitle.includes('[object Object]'),
+                `Заголовок задачи не содержит [object Object]: "${taskTitle}"`
+            );
+            
+            // Проверяем что заголовок не пустой
+            await this.runner.assert(
+                taskTitle.trim().length > 0,
+                `Заголовок задачи не пустой: "${taskTitle}"`
+            );
+
+            // 2. Проверяем описание задачи
+            const taskDescription = await this.page.$eval('.task-description p', el => el.textContent);
+            console.log(`  ✓ Описание: "${taskDescription.substring(0, 50)}..."`);
+            
+            // Проверяем что описание не содержит [object Object]
+            await this.runner.assert(
+                !taskDescription.includes('[object Object]'),
+                `Описание задачи не содержит [object Object]: "${taskDescription}"`
+            );
+            
+            // Проверяем что описание не пустое
+            await this.runner.assert(
+                taskDescription.trim().length > 0,
+                `Описание задачи не пустое: "${taskDescription}"`
+            );
+
+            // 3. Проверяем подсказку (показываем её сначала)
+            const hintButton = await this.page.$('.btn-hint');
+            await hintButton.click();
+            await this.page.waitForSelector('.task-hint', { visible: true });
+            
+            const hintText = await this.page.$eval('.task-hint p', el => el.textContent);
+            console.log(`  ✓ Подсказка: "${hintText.substring(0, 50)}..."`);
+            
+            // Проверяем что подсказка не содержит [object Object]
+            await this.runner.assert(
+                !hintText.includes('[object Object]'),
+                `Подсказка не содержит [object Object]: "${hintText}"`
+            );
+            
+            // Проверяем что подсказка содержит текст (не только лейбл)
+            const hintLabel = await this.page.evaluate(() => window.i18n.t('task.hint_label'));
+            const hintContent = hintText.replace(hintLabel, '').trim();
+            await this.runner.assert(
+                hintContent.length > 0,
+                `Подсказка содержит текст помимо лейбла: "${hintContent}"`
+            );
+
+            // Скрываем подсказку обратно
+            await hintButton.click();
+
+            // 4. Проверяем что все тексты на русском языке (содержат кириллицу)
+            const hasRussianInTitle = /[а-яё]/i.test(taskTitle);
+            const hasRussianInDescription = /[а-яё]/i.test(taskDescription);
+            const hasRussianInHint = /[а-яё]/i.test(hintContent);
+            
+            await this.runner.assert(
+                hasRussianInTitle || hasRussianInDescription || hasRussianInHint,
+                'По крайней мере одно поле содержит русский текст'
+            );
+
+            // Переходим к следующей задаче
+            if (attempt < 2) {
+                const nextButton = await this.page.$('button[onclick="loadRandomTask()"]');
+                await nextButton.click();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        // Тестируем на английском языке
+        console.log('\n🌍 Переключение на английский язык:');
+        await this.page.select('#language-select', 'en');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Проверяем одну задачу на английском
+        await this.page.waitForSelector('.task-header h3', { timeout: 5000 });
+        
+        const englishTitle = await this.page.$eval('.task-header h3', el => el.textContent);
+        const englishDescription = await this.page.$eval('.task-description p', el => el.textContent);
+        
+        console.log(`  ✓ English title: "${englishTitle}"`);
+        console.log(`  ✓ English description: "${englishDescription.substring(0, 50)}..."`);
+        
+        // Проверяем что тексты на английском (содержат латиницу)
+        const hasEnglishInTitle = /[a-z]/i.test(englishTitle);
+        const hasEnglishInDescription = /[a-z]/i.test(englishDescription);
+        
+        await this.runner.assert(
+            hasEnglishInTitle && hasEnglishInDescription,
+            'Заголовок и описание содержат английский текст'
+        );
+
+        // Проверяем что нет [object Object] на английском
+        await this.runner.assert(
+            !englishTitle.includes('[object Object]') && !englishDescription.includes('[object Object]'),
+            'Английские тексты не содержат [object Object]'
+        );
+
+        console.log('✅ Все текстовые поля задач корректно локализованы!');
+    }
+
     async testTaskExecution(taskTitle) {
         console.log('\n🧪 Тест: Выполнение SQL задачи');
         
@@ -656,6 +777,7 @@ async function runTests() {
         await tests.testResponsiveDesign();
         
         const { taskTitle } = await tests.testTaskSystem();
+        await tests.testTaskTextFieldsLocalization();
         await tests.testTaskExecution(taskTitle);
         await tests.testSchemaUpdateAfterInsert();
         await tests.testTaskSwitch(taskTitle);

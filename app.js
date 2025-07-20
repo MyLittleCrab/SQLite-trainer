@@ -140,19 +140,11 @@ async function loadRandomTask() {
 
 // Вспомогательная функция для получения файла текущей задачи
 function getCurrentTaskFile() {
-    if (!currentTask) return null;
+    if (!currentTask || !currentTask.id) return null;
     
-    // Ищем файл текущей задачи в списке всех задач
-    for (const task of allTasks) {
-        if (task.id === currentTask.id || 
-            (currentTask.title && 
-             ((typeof currentTask.title === 'string' && task.title === currentTask.title) ||
-              (typeof currentTask.title === 'object' && 
-               (task.title === currentTask.title.en || task.title === currentTask.title.ru))))) {
-            return task.file;
-        }
-    }
-    return null;
+    // Ищем файл текущей задачи в списке всех задач по ID
+    const task = allTasks.find(task => task.id === currentTask.id);
+    return task ? task.file : null;
 }
 
 // Загрузка конкретной задачи / Loading specific task
@@ -191,7 +183,10 @@ function initTaskDatabase() {
         
 
         
-        console.log('База данных инициализирована для задачи:', currentTask.title);
+        const taskTitle = typeof currentTask.title === 'object' 
+            ? (currentTask.title[i18n.getCurrentLanguage()] || currentTask.title.en || currentTask.title.ru)
+            : currentTask.title;
+        console.log('База данных инициализирована для задачи:', taskTitle);
     } catch (error) {
         console.error('Ошибка инициализации базы данных для задачи:', error);
     }
