@@ -254,10 +254,16 @@ async function runTests() {
         // Тест выполнения задачи
         console.log('\n🧪 Тест: Выполнение SQL задачи');
         
-        // Вводим правильный SQL запрос для простой задачи
-        await page.evaluate(() => {
-            document.getElementById('sql-input').value = 'SELECT name, age FROM students WHERE age > 20;';
-        });
+        // Используем правильный SQL запрос в зависимости от загруженной задачи
+        const sqlQuery = taskTitle.includes('Агрегация') 
+            ? 'SELECT age, COUNT(*) as count FROM students GROUP BY age ORDER BY age;'
+            : taskTitle.includes('Соединение') 
+            ? "SELECT s.name, g.grade FROM students s JOIN grades g ON s.id = g.student_id WHERE g.subject = 'Математика';"
+            : 'SELECT name, age FROM students WHERE age > 20;';
+        
+        await page.evaluate((query) => {
+            document.getElementById('sql-input').value = query;
+        }, sqlQuery);
         
         // Выполняем запрос
         await page.click('#execute-btn');
@@ -270,8 +276,20 @@ async function runTests() {
         
         // Проверяем статус задачи
         await page.waitForSelector('#task-status', { timeout: 5000 });
-        const taskStatus = await page.$('#task-status');
-        const statusClass = await page.evaluate(el => el.className, taskStatus);
+        
+        // Ждем появления сообщения о статусе
+        await page.waitForFunction(
+            () => {
+                const statusEl = document.getElementById('task-status');
+                return statusEl && statusEl.textContent.trim() !== '';
+            },
+            { timeout: 5000 }
+        );
+        
+        const statusClass = await page.$eval('#task-status', el => el.className);
+        const statusText = await page.$eval('#task-status', el => el.textContent);
+        
+        console.log(`Статус задачи: ${statusClass}, текст: ${statusText}`);
         await runner.assert(statusClass.includes('success'), 'Задача решена успешно');
         
         console.log('✅ Задача выполнена успешно');
@@ -282,13 +300,16 @@ async function runTests() {
         const oldTaskTitle = taskTitle;
         await page.click('.task-header button'); // Кнопка "Следующая задача"
         
+        // Даем время на обработку клика
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Ждем загрузки новой задачи
         await page.waitForFunction(
             (oldTitle) => {
                 const newTitle = document.querySelector('.task-header h3');
                 return newTitle && newTitle.textContent !== oldTitle;
             },
-            {},
+            { timeout: 10000 },
             oldTaskTitle
         );
         
