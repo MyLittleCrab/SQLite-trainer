@@ -384,12 +384,15 @@ function setExample(sql) {
 
 
 // Функция переключения языка / Language switching function
-function changeLanguage(lang) {
-    i18n.setLanguage(lang);
+async function changeLanguage(lang) {
+    await i18n.setLanguage(lang);
 }
 
 // Инициализация интерфейса после загрузки DOM / Interface initialization after DOM load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Ждем загрузки переводов для текущего языка
+    await i18n.loadTranslations(i18n.getCurrentLanguage());
+    
     // Устанавливаем значение селектора языка / Set language selector value
     const languageSelect = document.getElementById('language-select');
     if (languageSelect) {

@@ -2,144 +2,8 @@
 class I18n {
     constructor() {
         this.currentLanguage = 'en'; // По умолчанию английский
-        this.translations = {
-            en: {
-                // Header texts
-                'header.title': 'Browser SQL Trainer',
-                'header.subtitle': 'Trainer for learning SQL: execute queries, check results, database schema',
-                
-                // Loading messages
-                'loading.sqlite': 'Loading SQLite WebAssembly...',
-                'loading.module': 'Loading SQLite WebAssembly module...',
-                'loading.database': 'Creating database...',
-                'loading.tasks': 'Loading tasks...',
-                
-                // Error messages
-                'error.loading': 'SQLite loading error: ',
-                'error.causes': 'Possible causes:',
-                'error.no_internet': '• No internet connection',
-                'error.blocked_access': '• Access to sql.js.org is blocked',
-                'error.try_refresh': '• Try refreshing the page',
-                'error.tasks_loading': 'Tasks loading error: ',
-                'error.no_tasks': 'No available tasks',
-                'error.task_loading': 'Task loading error: ',
-                'error.db_init': 'Database initialization error for task: ',
-                'error.schema_update': 'Schema update error: ',
-                'error.sql_execution': 'SQL Error: ',
-                'error.enter_sql': 'Enter SQL query',
-                'error.sqlite_loading': 'SQLite WebAssembly is still loading...',
-                'error.db_not_initialized': 'Database is not initialized',
-                'error.result_check': 'Result check error: ',
-                'error.db_not_ready': 'Database is not ready',
-                'error.tables_not_found': 'Tables not found',
-                'error.count_error': 'Could not get record count',
-                
-                // Section headers
-                'section.current_task': '🎯 Current Task',
-                'section.database_schema': '📋 Database Schema',
-                'section.sql_editor': '💻 SQL Editor',
-                'section.results': '📊 Results',
-                
-                // Task interface
-                'task.next_task': 'Next Task',
-                'task.hint_label': 'Hint:',
-                'task.show_hint': 'Show Hint',
-                'task.hide_hint': 'Hide Hint',
-                'task.correct': 'Excellent! Task solved correctly!',
-                'task.wrong_rows': 'Wrong number of rows. Expected: {expected}, got: {actual}',
-                'task.wrong_value': 'Wrong value in row {row}, field "{field}". Expected: {expected}, got: {actual}',
-                
-                // SQL Editor
-                'sql.placeholder': 'Enter your SQL query here...',
-                'sql.execute': 'Execute Query',
-                'sql.executing': 'Executing...',
-                'sql.example_tables': 'List Tables',
-                
-                // Results
-                'results.placeholder': 'Execution results will appear here...',
-                'results.success_no_data': 'Query executed successfully. No results found.',
-                'results.success_with_count': 'Query executed successfully. Records found: ',
-                'results.success': 'Query executed successfully.',
-                
-                // Schema
-                'schema.tables_title': 'Tables in database:',
-                'schema.records_count': 'Records: ',
-                'schema.loading_error': 'Schema loading error: ',
-                
-                // Language switcher
-                'lang.switch': 'Language',
-                'lang.russian': 'Русский',
-                'lang.english': 'English'
-            },
-            ru: {
-                // Header texts
-                'header.title': 'Браузерный SQL тренажер',
-                'header.subtitle': 'Тренажер для изучения SQL: выполнение запросов, проверка результатов, схема базы данных',
-                
-                // Loading messages
-                'loading.sqlite': 'Загрузка SQLite WebAssembly...',
-                'loading.module': 'Загрузка SQLite WebAssembly модуля...',
-                'loading.database': 'Создание базы данных...',
-                'loading.tasks': 'Загрузка задач...',
-                
-                // Error messages
-                'error.loading': 'Ошибка загрузки SQLite: ',
-                'error.causes': 'Возможные причины:',
-                'error.no_internet': '• Нет подключения к интернету',
-                'error.blocked_access': '• Заблокирован доступ к sql.js.org',
-                'error.try_refresh': '• Попробуйте обновить страницу',
-                'error.tasks_loading': 'Ошибка загрузки задач: ',
-                'error.no_tasks': 'Нет доступных задач',
-                'error.task_loading': 'Ошибка загрузки задачи: ',
-                'error.db_init': 'Ошибка инициализации базы данных для задачи: ',
-                'error.schema_update': 'Ошибка обновления схемы: ',
-                'error.sql_execution': 'Ошибка SQL: ',
-                'error.enter_sql': 'Введите SQL запрос',
-                'error.sqlite_loading': 'SQLite WebAssembly еще загружается...',
-                'error.db_not_initialized': 'База данных не инициализирована',
-                'error.result_check': 'Ошибка при проверке результата: ',
-                'error.db_not_ready': 'База данных не готова',
-                'error.tables_not_found': 'Таблицы не найдены',
-                'error.count_error': 'Не удалось получить количество записей',
-                
-                // Section headers
-                'section.current_task': '🎯 Текущая задача',
-                'section.database_schema': '📋 Схема базы данных',
-                'section.sql_editor': '💻 SQL редактор',
-                'section.results': '📊 Результаты',
-                
-                // Task interface
-                'task.next_task': 'Следующая задача',
-                'task.hint_label': 'Подсказка:',
-                'task.show_hint': 'Показать подсказку',
-                'task.hide_hint': 'Скрыть подсказку',
-                'task.correct': 'Отлично! Задача решена верно!',
-                'task.wrong_rows': 'Неверное количество строк. Ожидается: {expected}, получено: {actual}',
-                'task.wrong_value': 'Неверное значение в строке {row}, поле "{field}". Ожидается: {expected}, получено: {actual}',
-                
-                // SQL Editor
-                'sql.placeholder': 'Введите ваш SQL запрос здесь...',
-                'sql.execute': 'Выполнить запрос',
-                'sql.executing': 'Выполняется...',
-                'sql.example_tables': 'Список таблиц',
-                
-                // Results
-                'results.placeholder': 'Результаты выполнения появятся здесь...',
-                'results.success_no_data': 'Запрос выполнен успешно. Результатов не найдено.',
-                'results.success_with_count': 'Запрос выполнен успешно. Найдено записей: ',
-                'results.success': 'Запрос выполнен успешно.',
-                
-                // Schema
-                'schema.tables_title': 'Таблицы в базе данных:',
-                'schema.records_count': 'Записей: ',
-                'schema.loading_error': 'Ошибка загрузки схемы: ',
-                
-                // Language switcher
-                'lang.switch': 'Язык',
-                'lang.russian': 'Русский',
-                'lang.english': 'English'
-            }
-        };
+        this.translations = {};
+        this.loadingPromises = {};
         
         // Загружаем сохраненный язык или используем английский по умолчанию
         this.loadLanguage();
@@ -153,11 +17,69 @@ class I18n {
                 document.documentElement.setAttribute('lang', this.currentLanguage);
             });
         }
+        
+        // Начинаем загрузку переводов для текущего языка
+        this.loadTranslations(this.currentLanguage);
+    }
+    
+    // Загрузка переводов из файла
+    async loadTranslations(lang) {
+        if (this.translations[lang]) {
+            return; // Уже загружено
+        }
+        
+        if (this.loadingPromises[lang]) {
+            return this.loadingPromises[lang]; // Уже загружается
+        }
+        
+        this.loadingPromises[lang] = this.fetchTranslations(lang);
+        
+        try {
+            await this.loadingPromises[lang];
+        } catch (error) {
+            console.error(`Failed to load translations for ${lang}:`, error);
+            delete this.loadingPromises[lang];
+        }
+    }
+    
+    // Получение переводов с сервера
+    async fetchTranslations(lang) {
+        try {
+            const response = await fetch(`./i18n/i18n${lang}.json`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const translations = await response.json();
+            this.translations[lang] = this.flattenTranslations(translations);
+            console.log(`Translations loaded for ${lang}`);
+        } catch (error) {
+            console.error(`Error loading translations for ${lang}:`, error);
+            throw error;
+        }
+    }
+    
+    // Преобразование вложенной структуры в плоскую с точками
+    flattenTranslations(obj, prefix = '') {
+        const flattened = {};
+        
+        for (const key in obj) {
+            const newKey = prefix ? `${prefix}.${key}` : key;
+            
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                Object.assign(flattened, this.flattenTranslations(obj[key], newKey));
+            } else {
+                flattened[newKey] = obj[key];
+            }
+        }
+        
+        return flattened;
     }
     
     // Получить перевод для ключа
     t(key, params = {}) {
-        let translation = this.translations[this.currentLanguage][key] || this.translations['en'][key] || key;
+        let translation = this.translations[this.currentLanguage]?.[key] || 
+                         this.translations['en']?.[key] || 
+                         key;
         
         // Заменяем параметры в строке
         Object.keys(params).forEach(param => {
@@ -168,8 +90,11 @@ class I18n {
     }
     
     // Установить язык
-    setLanguage(lang) {
-        if (this.translations[lang]) {
+    async setLanguage(lang) {
+        try {
+            // Загружаем переводы для нового языка
+            await this.loadTranslations(lang);
+            
             this.currentLanguage = lang;
             this.saveLanguage();
             
@@ -177,6 +102,8 @@ class I18n {
             document.documentElement.setAttribute('lang', lang);
             
             this.updateUI();
+        } catch (error) {
+            console.error(`Failed to set language to ${lang}:`, error);
         }
     }
     
