@@ -108,12 +108,60 @@ async function loadRandomTask() {
         return;
     }
     
-    const randomIndex = Math.floor(Math.random() * allTasks.length);
-    const taskRef = allTasks[randomIndex];
+    // Если есть только одна задача, загружаем её
+    if (allTasks.length === 1) {
+        const taskRef = allTasks[0];
+        await loadTask(taskRef);
+        return;
+    }
     
+    // Выбираем новую задачу, отличную от текущей
+    let randomIndex;
+    let taskRef;
+    let attempts = 0;
+    const maxAttempts = 50; // Предотвращаем бесконечный цикл
+    
+    do {
+        randomIndex = Math.floor(Math.random() * allTasks.length);
+        taskRef = allTasks[randomIndex];
+        attempts++;
+        
+        // Если текущей задачи нет, берем любую
+        if (!currentTask) break;
+        
+        // Проверяем, отличается ли новая задача от текущей
+        const isDifferent = taskRef.file !== getCurrentTaskFile();
+        if (isDifferent) break;
+        
+    } while (attempts < maxAttempts);
+    
+    await loadTask(taskRef);
+}
+
+// Вспомогательная функция для получения файла текущей задачи
+function getCurrentTaskFile() {
+    if (!currentTask) return null;
+    
+    // Ищем файл текущей задачи в списке всех задач
+    for (const task of allTasks) {
+        if (task.id === currentTask.id || 
+            (currentTask.title && 
+             ((typeof currentTask.title === 'string' && task.title === currentTask.title) ||
+              (typeof currentTask.title === 'object' && 
+               (task.title === currentTask.title.en || task.title === currentTask.title.ru))))) {
+            return task.file;
+        }
+    }
+    return null;
+}
+
+// Загрузка конкретной задачи / Loading specific task
+async function loadTask(taskRef) {
     try {
         const response = await fetch(`./sql-tasks/${taskRef.file}`);
         currentTask = await response.json();
+        
+        console.log(`Загружена задача: ${taskRef.file}`);
         
         // Инициализируем базу данных для задачи / Initialize database for task
         initTaskDatabase();
