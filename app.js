@@ -4,9 +4,30 @@ let SQL = null;
 let currentTask = null;
 let allTasks = [];
 
+// Функция для ожидания инициализации i18n / Function to wait for i18n initialization
+async function ensureI18nInitialized() {
+    let attempts = 0;
+    const maxAttempts = 50; // 5 секунд максимум
+    
+    while ((!window.i18n || typeof window.i18n.t !== 'function') && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!window.i18n || typeof window.i18n.t !== 'function') {
+        console.error('i18n не инициализировался в течение 5 секунд');
+        return false;
+    }
+    
+    return true;
+}
+
 // Инициализация SQLite WebAssembly / SQLite WebAssembly initialization
 async function initSQLite() {
     try {
+        // Ждем инициализации i18n
+        await ensureI18nInitialized();
+        
         document.getElementById('loading').innerHTML = 
             i18n.t('loading.module');
         
@@ -390,6 +411,9 @@ async function changeLanguage(lang) {
 
 // Инициализация интерфейса после загрузки DOM / Interface initialization after DOM load
 document.addEventListener('DOMContentLoaded', async function() {
+    // Ждем инициализации i18n
+    await ensureI18nInitialized();
+    
     // Ждем загрузки переводов для текущего языка
     await i18n.loadTranslations(i18n.getCurrentLanguage());
     

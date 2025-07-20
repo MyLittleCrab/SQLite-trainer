@@ -577,24 +577,34 @@ class SQLitePlaygroundTests {
     async testTaskSwitch(oldTaskTitle) {
         console.log('\n🧪 Тест: Смена задачи');
         
+        // Ждем, чтобы убедиться что задача полностью загружена
+        await this.page.waitForSelector('.task-header button', { timeout: 5000 });
+        
         await this.page.click('.task-header button'); // Кнопка "Следующая задача" / "Next task" button
         
         // Даем время на обработку клика / Give time to process click
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Ждем загрузки новой задачи / Wait for new task loading
-        await this.page.waitForFunction(
-            (oldTitle) => {
-                const newTitle = document.querySelector('.task-header h3');
-                return newTitle && newTitle.textContent !== oldTitle;
-            },
-            { timeout: 10000 },
-            oldTaskTitle
+        // Ждем загрузки новой задачи с более гибкой проверкой
+        let newTaskTitle = oldTaskTitle;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        while (newTaskTitle === oldTaskTitle && attempts < maxAttempts) {
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const newTaskHeader = await this.page.$('.task-header h3');
+            if (newTaskHeader) {
+                newTaskTitle = await this.page.evaluate(el => el.textContent, newTaskHeader);
+                console.log(`Попытка ${attempts}: заголовок задачи: "${newTaskTitle}"`);
+            }
+        }
+        
+        await this.runner.assert(
+            newTaskTitle !== oldTaskTitle, 
+            `Задача изменилась (было: "${oldTaskTitle}", стало: "${newTaskTitle}")`
         );
-        
-        const newTaskHeader = await this.page.$('.task-header h3');
-        const newTaskTitle = await this.page.evaluate(el => el.textContent, newTaskHeader);
-        await this.runner.assert(newTaskTitle !== oldTaskTitle, 'Задача изменилась');
         
         console.log(`Новая задача: "${newTaskTitle}"`);
     }
