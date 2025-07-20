@@ -17,9 +17,17 @@ async function runTasksTests() {
         
         // Запуск всех тестов системы задач
         await taskTests.testTaskSystem();
-        await taskTests.testTaskFieldsLocalization();
-        await taskTests.testTaskExecution();
-        await taskTests.testTaskSwitching();
+        await taskTests.testTaskTextFieldsLocalization();
+        
+        // Получаем заголовок текущей задачи для выполнения
+        const currentTaskTitle = await page.evaluate(() => {
+            const titleElement = document.querySelector('#task-title');
+            return titleElement ? titleElement.textContent.trim() : 'Unknown Task';
+        });
+        console.log(`Текущая задача: ${currentTaskTitle}`);
+        
+        await taskTests.testTaskExecution(currentTaskTitle);
+        await taskTests.testTaskSwitch(currentTaskTitle);
         
         await browser.close();
         const success = runner.summary();

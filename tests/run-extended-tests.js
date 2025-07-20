@@ -86,7 +86,7 @@ async function runExtendedTests() {
         await accessibilityTests.testFocusManagement();
 
         console.log('\n🏗️ === ДОПОЛНИТЕЛЬНЫЕ ТЕСТЫ === 🏗️');
-        await uiTests.testSchemaUpdateAfterInsert();
+        await uiTests.testInsertQuery();
 
     } catch (error) {
         console.error('❌ Критическая ошибка при выполнении тестов:', error);

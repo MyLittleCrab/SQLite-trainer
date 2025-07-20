@@ -18,7 +18,7 @@ async function runI18nTests() {
         // Запуск всех i18n тестов
         await i18nTests.testI18nSystem();
         await i18nTests.testLanguageSwitching();
-        await i18nTests.testTranslationFileLoading();
+        await i18nTests.testI18nFileLoading();
         
         await browser.close();
         const success = runner.summary();

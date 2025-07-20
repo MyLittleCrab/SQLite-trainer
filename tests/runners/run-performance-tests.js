@@ -16,12 +16,11 @@ async function runPerformanceTests() {
         await page.goto('http://localhost:8000/index.html', { waitUntil: 'networkidle0' });
         
         // Запуск всех тестов производительности
-        await perfTests.testPageLoadTime();
-        await perfTests.testSQLiteInitTime();
-        await perfTests.testQueryExecutionTime();
+        await perfTests.testPageLoadSpeed();
+        await perfTests.testSQLiteInitSpeed();
+        await perfTests.testQueryExecutionSpeed();
         await perfTests.testMemoryUsage();
-        await perfTests.testUIResponseTimes();
-        await perfTests.testBatchQueryPerformance();
+        await perfTests.testResponseTimes();
         
         await browser.close();
         const success = runner.summary();
