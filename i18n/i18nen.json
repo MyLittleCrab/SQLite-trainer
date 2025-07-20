@@ -42,6 +42,7 @@
     "show_hint": "Show Hint",
     "hide_hint": "Hide Hint",
     "correct": "Excellent! Task solved correctly!",
+    "incorrect": "Incorrect solution. Please check your query and try again.",
     "wrong_rows": "Wrong number of rows. Expected: {expected}, got: {actual}",
     "wrong_value": "Wrong value in row {row}, field \"{field}\". Expected: {expected}, got: {actual}",
     "check_result_title": "Task Check Result",

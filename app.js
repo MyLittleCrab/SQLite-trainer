@@ -637,5 +637,8 @@ window.executeTestSQL = executeTestSQL;
 window.checkSolutionSQL = checkSolutionSQL;
 window.setExample = setExample;
 
+// Экспорт переменных для тестирования / Export variables for testing
+window.getCurrentTask = () => currentTask;
+
 // Запуск инициализации при загрузке страницы / Start initialization on page load
 window.addEventListener('load', initSQLite);
