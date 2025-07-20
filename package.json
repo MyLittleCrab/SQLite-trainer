@@ -9,7 +9,21 @@
   "scripts": {
     "start": "npx http-server -p 8000",
     "test": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:run\"",
-    "test:run": "node tests/puppeteer-tests.js"
+    "test:run": "node tests/run-all-tests-new.js",
+    "test:extended": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:run\"",
+    "test:ui": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:ui:run\"",
+    "test:ui:run": "node tests/runners/run-ui-tests.js",
+    "test:i18n": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:i18n:run\"",
+    "test:i18n:run": "node tests/runners/run-i18n-tests.js",
+    "test:tasks": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:tasks:run\"",
+    "test:tasks:run": "node tests/runners/run-tasks-tests.js",
+    "test:sql": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:sql:run\"",
+    "test:sql:run": "node tests/runners/run-sql-tests.js",
+    "test:performance": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:performance:run\"",
+    "test:performance:run": "node tests/runners/run-performance-tests.js",
+    "test:accessibility": "npx concurrently --kill-others --success first \"npm run start\" \"npm run test:accessibility:run\"",
+    "test:accessibility:run": "node tests/runners/run-accessibility-tests.js",
+    "test:help": "echo '🚀 Доступные тесты (новая архитектура):' && echo '• npm test - все тесты' && echo '• npm run test:extended - то же что npm test' && echo '• npm run test:ui - UI тесты' && echo '• npm run test:i18n - интернационализация' && echo '• npm run test:tasks - система задач' && echo '• npm run test:sql - SQL функции' && echo '• npm run test:performance - производительность' && echo '• npm run test:accessibility - доступность'"
   },
   "repository": {
     "type": "git",
