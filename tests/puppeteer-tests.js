@@ -85,7 +85,7 @@ class SQLitePlaygroundTests {
         const sqlInput = await this.page.$('#sql-input');
         await this.runner.assert(sqlInput !== null, 'SQL поле ввода присутствует');
         
-        const runButton = await this.page.$('#execute-btn');
+        const runButton = await this.page.$('#execute-test-btn');
         await this.runner.assert(runButton !== null, 'Кнопка запуска присутствует');
         
         const results = await this.page.$('#results-container');
@@ -202,7 +202,7 @@ class SQLitePlaygroundTests {
         );
         
         // Проверяем другие элементы интерфейса
-        const executeButton = await this.page.$eval('[data-i18n="sql.execute"]', el => el.textContent);
+        const executeButton = await this.page.$eval('[data-i18n="sql.execute_test"]', el => el.textContent);
         await this.runner.assert(
             executeButton.includes('Выполнить'),
             'Кнопка "Выполнить запрос" переведена на русский'
@@ -353,7 +353,7 @@ class SQLitePlaygroundTests {
         
         await this.page.evaluate(() => document.getElementById('sql-input').value = '');
         await this.page.type('#sql-input', 'SELECT * FROM nonexistent_table');
-        await this.page.click('#execute-btn');
+        await this.page.click('#execute-test-btn');
         
         await new Promise(resolve => setTimeout(resolve, 1000));
         
@@ -560,7 +560,7 @@ class SQLitePlaygroundTests {
         }, sqlQuery);
         
         // Выполняем запрос / Execute query
-        await this.page.click('#execute-btn');
+        await this.page.click('#execute-test-btn');
         
         // Ждем появления результатов / Wait for results to appear
         await this.page.waitForFunction(
@@ -631,7 +631,7 @@ class SQLitePlaygroundTests {
             document.getElementById('sql-input').value = query;
         }, insertQuery);
         
-        await this.page.click('#execute-btn');
+        await this.page.click('#execute-test-btn');
         
         // Ждем выполнения запроса / Wait for query execution
         await this.page.waitForFunction(
@@ -729,6 +729,144 @@ class SQLitePlaygroundTests {
         
         console.log(`Новая задача: "${newTaskTitle}"`);
     }
+
+    async testExecuteTestSQL() {
+        console.log('\n🧪 Тест: Функция executeTestSQL');
+        
+        // Проверяем что функция доступна глобально / Check that function is globally available
+        const functionExists = await this.page.evaluate(() => {
+            return typeof window.executeTestSQL === 'function';
+        });
+        await this.runner.assert(functionExists, 'Функция executeTestSQL доступна глобально');
+
+        // Тестируем выполнение простого SELECT запроса / Test simple SELECT query execution
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'SELECT 1 as test_column');
+        
+        // Вызываем функцию напрямую / Call function directly
+        await this.page.evaluate(() => window.executeTestSQL());
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const resultsContent = await this.page.$eval('#results-container', el => el.innerHTML);
+        await this.runner.assertContains(resultsContent, 'test_column', 'Результаты SELECT запроса отображаются');
+        await this.runner.assertContains(resultsContent, 'success', 'Показывается сообщение об успехе');
+
+        // Тестируем выполнение INSERT запроса / Test INSERT query execution
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'CREATE TABLE test_table (id INTEGER, name TEXT)');
+        
+        await this.page.evaluate(() => window.executeTestSQL());
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const createResults = await this.page.$eval('#results-container', el => el.innerHTML);
+        await this.runner.assertContains(createResults, 'success', 'CREATE TABLE запрос выполнен успешно');
+
+        // Тестируем ошибку с пустым запросом / Test error with empty query
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.evaluate(() => window.executeTestSQL());
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const emptyResults = await this.page.$eval('#results-container', el => el.innerHTML);
+        await this.runner.assertContains(emptyResults, 'error', 'Ошибка при пустом запросе отображается');
+    }
+
+    async testCheckSolutionSQL() {
+        console.log('\n🧪 Тест: Функция checkSolutionSQL');
+        
+        // Проверяем что функция доступна глобально / Check that function is globally available
+        const functionExists = await this.page.evaluate(() => {
+            return typeof window.checkSolutionSQL === 'function';
+        });
+        await this.runner.assert(functionExists, 'Функция checkSolutionSQL доступна глобально');
+
+        // Проверяем что кнопка "Check Solution" существует / Check that Check Solution button exists
+        const checkButton = await this.page.$('#check-solution-btn');
+        await this.runner.assert(checkButton !== null, 'Кнопка "Check Solution" присутствует');
+
+        // Тестируем с пустым запросом / Test with empty query
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.evaluate(() => window.checkSolutionSQL());
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Проверяем что модальное окно появилось / Check that modal appeared
+        const modalVisible = await this.page.evaluate(() => {
+            const modal = document.getElementById('task-result-modal');
+            return modal && modal.classList.contains('show');
+        });
+        await this.runner.assert(modalVisible, 'Модальное окно с результатом появилось');
+
+        // Закрываем модальное окно / Close modal
+        await this.page.evaluate(() => {
+            const modal = document.getElementById('task-result-modal');
+            if (modal) modal.classList.remove('show');
+        });
+
+        // Тестируем с корректным SELECT запросом / Test with correct SELECT query
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'SELECT 1 as result');
+        await this.page.evaluate(() => window.checkSolutionSQL());
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const modalContentAfterSelect = await this.page.$eval('#task-result-content', el => el.innerHTML);
+        // Результат может быть разным в зависимости от того, есть ли загруженная задача
+        await this.runner.assert(modalContentAfterSelect.length > 0, 'Модальное окно содержит результат проверки');
+
+        // Закрываем модальное окно / Close modal
+        await this.page.evaluate(() => {
+            const modal = document.getElementById('task-result-modal');
+            if (modal) modal.classList.remove('show');
+        });
+
+        // Тестируем с не-SELECT запросом / Test with non-SELECT query
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'CREATE TABLE test_table2 (id INTEGER)');
+        await this.page.evaluate(() => window.checkSolutionSQL());
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const modalContentAfterCreate = await this.page.$eval('#task-result-content', el => el.innerHTML);
+        await this.runner.assertContains(modalContentAfterCreate, 'error', 'Ошибка для не-SELECT запроса отображается');
+    }
+
+    async testExecuteTestButton() {
+        console.log('\n🧪 Тест: Кнопка "Execute Test Query"');
+        
+        // Проверяем что кнопка существует / Check that button exists
+        const executeButton = await this.page.$('#execute-test-btn');
+        await this.runner.assert(executeButton !== null, 'Кнопка "Execute Test Query" присутствует');
+
+        // Тестируем клик по кнопке / Test button click
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'SELECT 42 as answer');
+        
+        await this.page.click('#execute-test-btn');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const resultsAfterClick = await this.page.$eval('#results-container', el => el.innerHTML);
+        await this.runner.assertContains(resultsAfterClick, '42', 'Результат отображается после клика по кнопке');
+        await this.runner.assertContains(resultsAfterClick, 'answer', 'Название колонки отображается');
+    }
+
+    async testCheckSolutionButton() {
+        console.log('\n🧪 Тест: Кнопка "Check Task Solution"');
+        
+        // Проверяем что кнопка существует / Check that button exists
+        const checkButton = await this.page.$('#check-solution-btn');
+        await this.runner.assert(checkButton !== null, 'Кнопка "Check Task Solution" присутствует');
+
+        // Тестируем клик по кнопке / Test button click
+        await this.page.evaluate(() => document.getElementById('sql-input').value = '');
+        await this.page.type('#sql-input', 'SELECT 123 as test_value');
+        
+        await this.page.click('#check-solution-btn');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Проверяем что модальное окно появилось / Check that modal appeared
+        const modalVisibleAfterClick = await this.page.evaluate(() => {
+            const modal = document.getElementById('task-result-modal');
+            return modal && modal.classList.contains('show');
+        });
+        await this.runner.assert(modalVisibleAfterClick, 'Модальное окно появилось после клика по кнопке');
+    }
 }
 
 // Основная функция запуска тестов / Main test execution function
@@ -781,6 +919,12 @@ async function runTests() {
         await tests.testTaskExecution(taskTitle);
         await tests.testSchemaUpdateAfterInsert();
         await tests.testTaskSwitch(taskTitle);
+        
+        // Новые тесты для функций executeTestSQL и checkSolutionSQL
+        await tests.testExecuteTestSQL();
+        await tests.testCheckSolutionSQL();
+        await tests.testExecuteTestButton();
+        await tests.testCheckSolutionButton();
 
     } catch (error) {
         console.error('❌ Критическая ошибка при выполнении тестов:', error);
