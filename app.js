@@ -175,13 +175,77 @@ function initTaskDatabase() {
     if (!currentTask || !currentTask.initScript) return;
     
     try {
-        // Выполняем скрипт инициализации
+        // Выполняем скрипт инициализации задачи
         for (const query of currentTask.initScript) {
             db.exec(query);
         }
+        
+        // После выполнения задачи всегда восстанавливаем демо-таблицы
+        // (если они были удалены в процессе)
+        ensureDemoTables();
+        
         console.log('База данных инициализирована для задачи:', currentTask.title);
     } catch (error) {
         console.error('Ошибка инициализации базы данных для задачи:', error);
+    }
+}
+
+// Функция для обеспечения наличия демо-таблиц
+function ensureDemoTables() {
+    try {
+        // Проверяем, существуют ли демо-таблицы
+        const checkUsers = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='users';");
+        const checkOrders = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='orders';");
+        
+        if (checkUsers.length === 0) {
+            // Пересоздаем таблицу users, если её нет
+            db.exec(`
+                CREATE TABLE users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    age INTEGER,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            `);
+            
+            db.exec(`
+                INSERT INTO users (id, name, email, age) VALUES 
+                (1, 'Алексей Иванов', 'alexey@example.com', 25),
+                (2, 'Мария Петрова', 'maria@example.com', 30),
+                (3, 'Иван Сидоров', 'ivan@example.com', 28),
+                (4, 'Елена Козлова', 'elena@example.com', 22),
+                (5, 'Дмитрий Соколов', 'dmitry@example.com', 35);
+            `);
+        }
+        
+        if (checkOrders.length === 0) {
+            // Пересоздаем таблицу orders, если её нет
+            db.exec(`
+                CREATE TABLE orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    product_name TEXT NOT NULL,
+                    amount DECIMAL(10,2),
+                    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                );
+            `);
+            
+            db.exec(`
+                INSERT INTO orders (id, user_id, product_name, amount) VALUES 
+                (1, 1, 'Ноутбук', 75000.00),
+                (2, 1, 'Мышь', 1500.00),
+                (3, 2, 'Клавиатура', 3500.00),
+                (4, 3, 'Монитор', 25000.00),
+                (5, 2, 'Наушники', 5500.00),
+                (6, 4, 'Планшет', 30000.00),
+                (7, 5, 'Телефон', 45000.00),
+                (8, 3, 'Принтер', 12000.00);
+            `);
+        }
+    } catch (error) {
+        console.error('Ошибка восстановления демо-таблиц:', error);
     }
 }
 
