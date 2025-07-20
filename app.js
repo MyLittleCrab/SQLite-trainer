@@ -1,19 +1,19 @@
-// Глобальные переменные
+// Глобальные переменные / Global variables
 let db = null;
 let SQL = null;
 let currentTask = null;
 let allTasks = [];
 
-// Инициализация SQLite WebAssembly
+// Инициализация SQLite WebAssembly / SQLite WebAssembly initialization
 async function initSQLite() {
     try {
         document.getElementById('loading').innerHTML = 
             'Загрузка SQLite WebAssembly модуля...';
         
-        // Правильная инициализация sql.js
-        // initSqlJs возвращает промис, который резолвится с SQL объектом
+        // Правильная инициализация sql.js / Proper sql.js initialization
+        // initSqlJs возвращает промис, который резолвится с SQL объектом / initSqlJs returns a promise that resolves with SQL object
         SQL = await initSqlJs({
-            // locateFile позволяет указать, где искать .wasm файлы
+            // locateFile позволяет указать, где искать .wasm файлы / locateFile allows to specify where to look for .wasm files
             locateFile: file => `https://sql.js.org/dist/${file}`
         });
         
@@ -22,22 +22,22 @@ async function initSQLite() {
         document.getElementById('loading').innerHTML = 
             'Создание базы данных...';
         
-        // Только после успешной загрузки создаем базу данных
+        // Только после успешной загрузки создаем базу данных / Only after successful loading create database
         db = new SQL.Database();
         console.log('База данных создана в памяти');
         
         document.getElementById('loading').innerHTML = 
             'Загрузка задач...';
         
-        // Загружаем задачи
+        // Загружаем задачи / Load tasks
         await loadTasks();
         console.log('Задачи загружены');
         
-        // Обновляем схему
+        // Обновляем схему / Update schema
         updateSchema();
         console.log('Схема базы данных обновлена');
         
-        // Показываем основной контент
+        // Показываем основной контент / Show main content
         document.getElementById('loading').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
         
@@ -46,7 +46,7 @@ async function initSQLite() {
     } catch (error) {
         console.error('Ошибка инициализации SQLite:', error);
         
-        // Показываем детальную ошибку пользователю
+        // Показываем детальную ошибку пользователю / Show detailed error to user
         let errorMessage = 'Ошибка загрузки SQLite: ' + error.message;
         
         if (error.message.includes('fetch')) {
@@ -63,14 +63,14 @@ async function initSQLite() {
 
 
 
-// Загрузка задач
+// Загрузка задач / Loading tasks
 async function loadTasks() {
     try {
         const response = await fetch('sql-tasks/index.json');
         allTasks = await response.json();
         console.log('Загружено задач:', allTasks.length);
         
-        // Показываем случайную задачу при запуске
+        // Показываем случайную задачу при запуске / Show random task at startup
         loadRandomTask();
     } catch (error) {
         console.error('Ошибка загрузки задач:', error);
@@ -79,7 +79,7 @@ async function loadTasks() {
     }
 }
 
-// Загрузка случайной задачи
+// Загрузка случайной задачи / Loading random task
 async function loadRandomTask() {
     if (allTasks.length === 0) {
         document.getElementById('task-content').innerHTML = 
@@ -94,13 +94,13 @@ async function loadRandomTask() {
         const response = await fetch(`sql-tasks/${taskRef.file}`);
         currentTask = await response.json();
         
-        // Инициализируем базу данных для задачи
+        // Инициализируем базу данных для задачи / Initialize database for task
         initTaskDatabase();
         
-        // Отображаем задачу
+        // Отображаем задачу / Display task
         displayTask();
         
-        // Обновляем схему
+        // Обновляем схему / Update schema
         updateSchema();
         
     } catch (error) {
@@ -110,12 +110,12 @@ async function loadRandomTask() {
     }
 }
 
-// Инициализация базы данных для задачи
+// Инициализация базы данных для задачи / Database initialization for task
 function initTaskDatabase() {
     if (!currentTask || !currentTask.initScript) return;
     
     try {
-        // Выполняем скрипт инициализации задачи
+        // Выполняем скрипт инициализации задачи / Execute task initialization script
         for (const query of currentTask.initScript) {
             db.exec(query);
         }
@@ -130,7 +130,7 @@ function initTaskDatabase() {
 
 
 
-// Отображение текущей задачи
+// Отображение текущей задачи / Display current task
 function displayTask() {
     if (!currentTask) return;
     
@@ -151,7 +151,7 @@ function displayTask() {
     `;
 }
 
-// Показать/скрыть подсказку
+// Показать/скрыть подсказку / Show/hide hint
 function toggleHint() {
     const hintDiv = document.querySelector('.task-hint');
     const button = document.querySelector('.btn-hint');
@@ -165,26 +165,26 @@ function toggleHint() {
     }
 }
 
-// Проверка результата запроса
+// Проверка результата запроса / Query result verification
 function checkTaskResult(userResult) {
     if (!currentTask || !currentTask.expectedResult) return false;
     
     try {
-        // Сравниваем результаты
+        // Сравниваем результаты / Compare results
         const expected = currentTask.expectedResult;
         
-        // Проверяем количество строк
+        // Проверяем количество строк / Check number of rows
         if (userResult.length !== expected.length) {
             showTaskStatus(false, `Неверное количество строк. Ожидается: ${expected.length}, получено: ${userResult.length}`);
             return false;
         }
         
-        // Проверяем каждую строку
+        // Проверяем каждую строку / Check each row
         for (let i = 0; i < expected.length; i++) {
             const expectedRow = expected[i];
             const userRow = userResult[i];
             
-            // Проверяем каждое поле
+            // Проверяем каждое поле / Check each field
             for (const field in expectedRow) {
                 if (userRow[field] !== expectedRow[field]) {
                     showTaskStatus(false, `Неверное значение в строке ${i + 1}, поле "${field}". Ожидается: ${expectedRow[field]}, получено: ${userRow[field]}`);
@@ -202,24 +202,24 @@ function checkTaskResult(userResult) {
     }
 }
 
-// Показать статус выполнения задачи
+// Показать статус выполнения задачи / Show task execution status
 function showTaskStatus(success, message) {
     const statusDiv = document.getElementById('task-status');
     statusDiv.className = `task-status ${success ? 'success' : 'error'}`;
     statusDiv.innerHTML = message;
 }
 
-// Обновление отображения схемы базы данных
+// Обновление отображения схемы базы данных / Update database schema display
 function updateSchema() {
     try {
-        // Проверяем готовность
+        // Проверяем готовность / Check readiness
         if (!db) {
             document.getElementById('schema-content').innerHTML = 
                 '<p>База данных не готова</p>';
             return;
         }
         
-        // Получаем информацию о таблицах
+        // Получаем информацию о таблицах / Get tables information
         const stmt = db.prepare("SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;");
         const tables = [];
         
@@ -238,7 +238,7 @@ function updateSchema() {
                 schemaHTML += `<strong>${table.name}</strong><br>`;
                 schemaHTML += `<code style="font-size: 12px; background: #e9ecef; padding: 5px; border-radius: 3px; display: block; margin-top: 5px;">${table.sql}</code>`;
                 
-                // Получаем количество записей
+                // Получаем количество записей / Get record count
                 try {
                     const countStmt = db.prepare(`SELECT COUNT(*) as count FROM ${table.name}`);
                     countStmt.step();
@@ -262,7 +262,7 @@ function updateSchema() {
     }
 }
 
-// Выполнение SQL запроса
+// Выполнение SQL запроса / SQL query execution
 function executeSQL() {
     const sqlInput = document.getElementById('sql-input');
     const resultsContainer = document.getElementById('results-container');
@@ -275,7 +275,7 @@ function executeSQL() {
         return;
     }
     
-    // Проверяем, что SQLite полностью инициализирован
+    // Проверяем, что SQLite полностью инициализирован / Check that SQLite is fully initialized
     if (!SQL) {
         resultsContainer.innerHTML = '<div class="error">SQLite WebAssembly еще загружается...</div>';
         return;
@@ -286,16 +286,16 @@ function executeSQL() {
         return;
     }
     
-    // Отключаем кнопку на время выполнения
+    // Отключаем кнопку на время выполнения / Disable button during execution
     executeBtn.disabled = true;
     executeBtn.textContent = 'Выполняется...';
     
     try {
-        // Определяем тип запроса
+        // Определяем тип запроса / Determine query type
         const isSelectQuery = sql.toLowerCase().trim().startsWith('select');
         
         if (isSelectQuery) {
-            // Для SELECT запросов показываем результаты в таблице
+            // Для SELECT запросов показываем результаты в таблице / For SELECT queries show results in table
             const stmt = db.prepare(sql);
             const results = [];
             const columns = stmt.getColumnNames();
@@ -311,13 +311,13 @@ function executeSQL() {
                 let tableHTML = '<div class="success">Запрос выполнен успешно. Найдено записей: ' + results.length + '</div>';
                 tableHTML += '<table><thead><tr>';
                 
-                // Заголовки столбцов
+                // Заголовки столбцов / Column headers
                 columns.forEach(col => {
                     tableHTML += `<th>${col}</th>`;
                 });
                 tableHTML += '</tr></thead><tbody>';
                 
-                // Данные
+                // Данные / Data
                 results.forEach(row => {
                     tableHTML += '<tr>';
                     columns.forEach(col => {
@@ -332,18 +332,24 @@ function executeSQL() {
                 tableHTML += '</tbody></table>';
                 resultsContainer.innerHTML = tableHTML;
                 
-                // Проверяем результат задачи, если задача активна
+                // Проверяем результат задачи, если задача активна / Check task result if task is active
                 if (currentTask) {
                     checkTaskResult(results);
                 }
             }
         } else {
-            // Для других запросов (INSERT, UPDATE, DELETE, CREATE, etc.)
+            // Для других запросов (INSERT, UPDATE, DELETE, CREATE, etc.) / For other queries (INSERT, UPDATE, DELETE, CREATE, etc.)
             const result = db.exec(sql);
             resultsContainer.innerHTML = '<div class="success">Запрос выполнен успешно.</div>';
             
-            // Обновляем схему если это был DDL запрос
-            if (sql.toLowerCase().includes('create') || sql.toLowerCase().includes('drop') || sql.toLowerCase().includes('alter')) {
+            // Обновляем схему для всех запросов, которые могут изменить структуру или данные / Update schema for all queries that can change structure or data
+            const sqlLower = sql.toLowerCase().trim();
+            if (sqlLower.includes('create') || 
+                sqlLower.includes('drop') || 
+                sqlLower.includes('alter') ||
+                sqlLower.includes('insert') ||
+                sqlLower.includes('update') ||
+                sqlLower.includes('delete')) {
                 updateSchema();
             }
         }
@@ -352,23 +358,23 @@ function executeSQL() {
         console.error('Ошибка выполнения SQL:', error);
         resultsContainer.innerHTML = '<div class="error">Ошибка SQL: ' + error.message + '</div>';
     } finally {
-        // Включаем кнопку обратно
+        // Включаем кнопку обратно / Enable button back
         executeBtn.disabled = false;
         executeBtn.textContent = 'Выполнить запрос';
     }
 }
 
-// Установка примера запроса
+// Установка примера запроса / Set example query
 function setExample(sql) {
     document.getElementById('sql-input').value = sql;
 }
 
-// Обработка нажатия Enter в текстовом поле
+// Обработка нажатия Enter в текстовом поле / Handle Enter key press in text field
 document.addEventListener('DOMContentLoaded', function() {
     const sqlInput = document.getElementById('sql-input');
     
     sqlInput.addEventListener('keydown', function(event) {
-        // Ctrl+Enter или Cmd+Enter для выполнения запроса
+        // Ctrl+Enter или Cmd+Enter для выполнения запроса / Ctrl+Enter or Cmd+Enter to execute query
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault();
             executeSQL();
@@ -376,5 +382,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Запуск инициализации при загрузке страницы
+// Запуск инициализации при загрузке страницы / Start initialization on page load
 window.addEventListener('load', initSQLite);

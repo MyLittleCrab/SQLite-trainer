@@ -1,10 +1,10 @@
 const puppeteer = require('puppeteer');
 
-// Конфигурация
+// Конфигурация / Configuration
 const PORT = 8000;
 const BASE_URL = `http://localhost:${PORT}`;
 
-// Функция ожидания готовности сервера
+// Функция ожидания готовности сервера / Server readiness waiting function
 async function waitForServer(maxAttempts = 30) {
     for (let i = 0; i < maxAttempts; i++) {
         try {
@@ -14,14 +14,14 @@ async function waitForServer(maxAttempts = 30) {
                 return true;
             }
         } catch (error) {
-            // Сервер еще не готов, ждем
+            // Сервер еще не готов, ждем / Server not ready yet, waiting
         }
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
     throw new Error('Сервер не отвечает после 30 секунд ожидания');
 }
 
-// Утилиты для тестирования
+// Утилиты для тестирования / Testing utilities
 class TestRunner {
     constructor() {
         this.passed = 0;
@@ -52,7 +52,7 @@ class TestRunner {
     }
 }
 
-// Класс для основных тестов
+// Класс для основных тестов / Main tests class
 class SQLitePlaygroundTests {
     constructor(page, runner) {
         this.page = page;
@@ -70,11 +70,11 @@ class SQLitePlaygroundTests {
         console.log(`Заголовок страницы: "${title}"`);
         await this.runner.assertContains(title, 'SQLite', 'Заголовок содержит SQLite');
         
-        // Проверим содержимое страницы для отладки
+        // Проверим содержимое страницы для отладки / Check page content for debugging
         const bodyContent = await this.page.content();
         console.log(`Длина HTML: ${bodyContent.length} символов`);
         
-        // Добавим скриншот для отладки
+        // Добавим скриншот для отладки / Add screenshot for debugging
         await this.page.screenshot({ path: 'debug-screenshot.png', fullPage: true });
         console.log('Скриншот сохранен в debug-screenshot.png');
     }
@@ -98,7 +98,7 @@ class SQLitePlaygroundTests {
     async testSQLiteInitialization() {
         console.log('\n🧪 Тест: Ожидание инициализации SQLite');
         
-        // Ждем загрузки SQLite (максимум 10 секунд)
+        // Ждем загрузки SQLite (максимум 10 секунд) / Wait for SQLite loading (maximum 10 seconds)
         try {
             await this.page.waitForFunction(
                 () => window.db !== null && window.SQL !== null,
@@ -158,30 +158,30 @@ class SQLitePlaygroundTests {
     async testTaskSystem() {
         console.log('\n🧪 Тест: Система задач');
         
-        // Проверяем наличие секции задач
+        // Проверяем наличие секции задач / Check task section presence
         const taskSection = await this.page.$('#task-content');
         await this.runner.assert(taskSection !== null, 'Секция задач присутствует');
         
-        // Проверяем заголовок задачи
+        // Проверяем заголовок задачи / Check task title
         const taskHeader = await this.page.$('.task-header h3');
         await this.runner.assert(taskHeader !== null, 'Заголовок задачи отображается');
         
         const taskTitle = await this.page.evaluate(el => el.textContent, taskHeader);
         console.log(`Загружена задача: "${taskTitle}"`);
         
-        // Проверяем кнопку "Следующая задача"
+        // Проверяем кнопку "Следующая задача" / Check "Next task" button
         const nextTaskButton = await this.page.$('.task-header button');
         await this.runner.assert(nextTaskButton !== null, 'Кнопка "Следующая задача" присутствует');
         
-        // Проверяем описание задачи
+        // Проверяем описание задачи / Check task description
         const taskDescription = await this.page.$('.task-description');
         await this.runner.assert(taskDescription !== null, 'Описание задачи присутствует');
         
-        // Проверяем кнопку подсказки
+        // Проверяем кнопку подсказки / Check hint button
         const hintButton = await this.page.$('.btn-hint');
         await this.runner.assert(hintButton !== null, 'Кнопка подсказки присутствует');
         
-        // Тестируем подсказку
+        // Тестируем подсказку / Test hint functionality
         await hintButton.click();
         await this.page.waitForSelector('.task-hint', { visible: true });
         const hintVisible = await this.page.$eval('.task-hint', el => el.style.display !== 'none');
@@ -193,7 +193,7 @@ class SQLitePlaygroundTests {
     async testTaskExecution(taskTitle) {
         console.log('\n🧪 Тест: Выполнение SQL задачи');
         
-        // Используем правильный SQL запрос в зависимости от загруженной задачи
+        // Используем правильный SQL запрос в зависимости от загруженной задачи / Use correct SQL query depending on loaded task
         const sqlQuery = taskTitle.includes('Агрегация') 
             ? 'SELECT age, COUNT(*) as count FROM students GROUP BY age ORDER BY age;'
             : taskTitle.includes('Соединение') 
@@ -204,19 +204,19 @@ class SQLitePlaygroundTests {
             document.getElementById('sql-input').value = query;
         }, sqlQuery);
         
-        // Выполняем запрос
+        // Выполняем запрос / Execute query
         await this.page.click('#execute-btn');
         
-        // Ждем появления результатов
+        // Ждем появления результатов / Wait for results to appear
         await this.page.waitForFunction(
             () => document.querySelector('#results-container table') !== null,
             { timeout: 10000 }
         );
         
-        // Проверяем статус задачи
+        // Проверяем статус задачи / Check task status
         await this.page.waitForSelector('#task-status', { timeout: 5000 });
         
-        // Ждем появления сообщения о статусе
+        // Ждем появления сообщения о статусе / Wait for status message to appear
         await this.page.waitForFunction(
             () => {
                 const statusEl = document.getElementById('task-status');
@@ -234,15 +234,104 @@ class SQLitePlaygroundTests {
         console.log('✅ Задача выполнена успешно');
     }
 
+    async testSchemaUpdateAfterInsert() {
+        console.log('\n🧪 Тест: Обновление схемы после INSERT запроса');
+        
+        // Получаем первоначальное количество записей в таблице students / Get initial number of records in students table
+        const initialCount = await this.page.evaluate(() => {
+            const schemaContent = document.getElementById('schema-content').innerHTML;
+            const match = schemaContent.match(/students.*?Записей:\s*(\d+)/s);
+            return match ? parseInt(match[1]) : 0;
+        });
+        
+        console.log(`Первоначальное количество записей в таблице students: ${initialCount}`);
+        
+        // Выполняем INSERT запрос / Execute INSERT query
+        const insertQuery = "INSERT INTO students (name, age) VALUES ('Тестовый Студент', 25);";
+        await this.page.evaluate((query) => {
+            document.getElementById('sql-input').value = query;
+        }, insertQuery);
+        
+        await this.page.click('#execute-btn');
+        
+        // Ждем выполнения запроса / Wait for query execution
+        await this.page.waitForFunction(
+            () => {
+                const results = document.getElementById('results-container').innerHTML;
+                return results.includes('Запрос выполнен успешно');
+            },
+            { timeout: 5000 }
+        );
+        
+        // Проверяем, что схема обновилась / Check that schema updated
+        await this.page.waitForFunction(
+            (expectedCount) => {
+                const schemaContent = document.getElementById('schema-content').innerHTML;
+                const match = schemaContent.match(/students.*?Записей:\s*(\d+)/s);
+                const currentCount = match ? parseInt(match[1]) : 0;
+                return currentCount === expectedCount + 1;
+            },
+            { timeout: 5000 },
+            initialCount
+        );
+        
+        const finalCount = await this.page.evaluate(() => {
+            const schemaContent = document.getElementById('schema-content').innerHTML;
+            const match = schemaContent.match(/students.*?Записей:\s*(\d+)/s);
+            return match ? parseInt(match[1]) : 0;
+        });
+        
+        console.log(`Количество записей после INSERT: ${finalCount}`);
+        await this.runner.assert(finalCount === initialCount + 1, 
+            `Количество записей увеличилось на 1 (было: ${initialCount}, стало: ${finalCount})`);
+        
+        // Дополнительная проверка: выполним еще один INSERT и проверим снова / Additional check: execute another INSERT and verify again
+        const secondInsertQuery = "INSERT INTO students (name, age) VALUES ('Второй Тестовый', 30);";
+        await this.page.evaluate((query) => {
+            document.getElementById('sql-input').value = query;
+        }, secondInsertQuery);
+        
+        await this.page.click('#execute-btn');
+        
+        await this.page.waitForFunction(
+            () => {
+                const results = document.getElementById('results-container').innerHTML;
+                return results.includes('Запрос выполнен успешно');
+            },
+            { timeout: 5000 }
+        );
+        
+        await this.page.waitForFunction(
+            (expectedCount) => {
+                const schemaContent = document.getElementById('schema-content').innerHTML;
+                const match = schemaContent.match(/students.*?Записей:\s*(\d+)/s);
+                const currentCount = match ? parseInt(match[1]) : 0;
+                return currentCount === expectedCount + 2;
+            },
+            { timeout: 5000 },
+            initialCount
+        );
+        
+        const finalCount2 = await this.page.evaluate(() => {
+            const schemaContent = document.getElementById('schema-content').innerHTML;
+            const match = schemaContent.match(/students.*?Записей:\s*(\d+)/s);
+            return match ? parseInt(match[1]) : 0;
+        });
+        
+        console.log(`Количество записей после второго INSERT: ${finalCount2}`);
+        await this.runner.assert(finalCount2 === initialCount + 2, 
+            `Количество записей увеличилось на 2 (было: ${initialCount}, стало: ${finalCount2})`);
+    }
+
     async testTaskSwitch(oldTaskTitle) {
         console.log('\n🧪 Тест: Смена задачи');
         
-        await this.page.click('.task-header button'); // Кнопка "Следующая задача"
+        await this.page.click('.task-header button'); // Кнопка "Следующая задача" / "Next task" button
         
-        // Даем время на обработку клика
+        // Даем время на обработку клика / Give time to process click
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Ждем загрузки новой задачи
+        // Ждем загрузки новой задачи / Wait for new task loading
         await this.page.waitForFunction(
             (oldTitle) => {
                 const newTitle = document.querySelector('.task-header h3');
@@ -260,16 +349,16 @@ class SQLitePlaygroundTests {
     }
 }
 
-// Основная функция запуска тестов
+// Основная функция запуска тестов / Main test execution function
 async function runTests() {
     let browser = null;
     const runner = new TestRunner();
 
     try {
-        // Ждем готовности сервера
+        // Ждем готовности сервера / Wait for server readiness
         await waitForServer();
         
-        // Запускаем браузер
+        // Запускаем браузер / Launch browser
         console.log('🌐 Запуск Chromium...');
         browser = await puppeteer.launch({
             headless: true,
@@ -284,17 +373,17 @@ async function runTests() {
 
         const page = await browser.newPage();
         
-        // Включаем консольные логи
+        // Включаем консольные логи / Enable console logs
         page.on('console', msg => {
             if (msg.type() === 'error') {
                 console.log(`🔴 Browser Error: ${msg.text()}`);
             }
         });
 
-        // Создаем экземпляр тестов
+        // Создаем экземпляр тестов / Create test instance
         const tests = new SQLitePlaygroundTests(page, runner);
 
-        // Запускаем все тесты последовательно
+        // Запускаем все тесты последовательно / Run all tests sequentially
         await tests.testPageLoad();
         await tests.testUIElements();
         await tests.testSQLiteInitialization();
@@ -305,13 +394,14 @@ async function runTests() {
         
         const { taskTitle } = await tests.testTaskSystem();
         await tests.testTaskExecution(taskTitle);
+        await tests.testSchemaUpdateAfterInsert();
         await tests.testTaskSwitch(taskTitle);
 
     } catch (error) {
         console.error('❌ Критическая ошибка при выполнении тестов:', error);
         await runner.assert(false, `Критическая ошибка: ${error.message}`);
     } finally {
-        // Закрываем браузер
+        // Закрываем браузер / Close browser
         if (browser) {
             await browser.close();
             console.log('🔒 Браузер закрыт');
@@ -321,7 +411,7 @@ async function runTests() {
     return runner.summary();
 }
 
-// Запуск тестов
+// Запуск тестов / Run tests
 console.log('🚀 Запуск Puppeteer тестов для SQLite WebAssembly Playground\n');
 runTests().then(success => {
     process.exit(success ? 0 : 1);
